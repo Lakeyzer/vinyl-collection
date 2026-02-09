@@ -1,6 +1,24 @@
 <script setup lang="ts">
-const { user, logout } = useAuth();
+import type { DropdownMenuItem } from "@nuxt/ui";
+const { user, profile, logout } = useAuth();
 const signInModal = ref(false);
+
+const items = ref<DropdownMenuItem[][]>([
+  [
+    {
+      label: profile.value?.username,
+      icon: "fa7-solid:user",
+      type: "label",
+    },
+  ],
+  [
+    {
+      label: "Sign Out",
+      icon: "fa7-solid:sign-out",
+      onSelect: () => logout(),
+    },
+  ],
+]);
 </script>
 
 <template>
@@ -14,12 +32,12 @@ const signInModal = ref(false);
       <UModal
         v-if="!user"
         v-model="signInModal"
-        title="Sign in"
+        title="Sign In"
         description="Only available for selected users"
       >
         <UButton
           icon="fa7-solid:sign-in"
-          aria-label="Sign in"
+          aria-label="Sign In"
           color="neutral"
           variant="ghost"
         />
@@ -28,14 +46,17 @@ const signInModal = ref(false);
           <SignIn @success="signInModal = false" />
         </template>
       </UModal>
-      <UButton
-        v-else
-        icon="fa7-solid:sign-out"
-        aria-label="Sign out"
-        color="neutral"
-        variant="ghost"
-        @click="logout"
-      />
+      <template v-else>
+        <Search />
+        <UDropdownMenu :items="items">
+          <UButton
+            icon="fa7-solid:user"
+            aria-label="Sign out"
+            color="neutral"
+            variant="ghost"
+          />
+        </UDropdownMenu>
+      </template>
     </template>
   </UHeader>
 </template>
