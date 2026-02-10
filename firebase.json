@@ -1,0 +1,11 @@
+{
+  "functions": { "source": ".output/server" },
+  "hosting": [
+    {
+      "site": "vinyl-592e2",
+      "public": ".output/public",
+      "cleanUrls": true,
+      "rewrites": [{ "source": "**", "function": "server" }]
+    }
+  ]
+}
