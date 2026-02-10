@@ -1,8 +1,8 @@
 export function useDiscogs() {
   async function search(
     query: string,
-    pageSize: number = 10,
     page: number = 1,
+    pageSize: number = 10,
   ) {
     try {
       const res = await $fetch("/api/discogs/search", {
@@ -10,6 +10,7 @@ export function useDiscogs() {
           q: query,
           type: "release",
           per_page: pageSize,
+          page,
         },
       });
       return res;
