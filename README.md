@@ -12,11 +12,11 @@ pnpm install
 
 ### Firebase
 
-Start a firebase project
+Start a new project on [firebase](https://console.firebase.google.com/).
 
 ### Discogs API
 
-Create a discogs account and request an access token for the API.
+Create a discogs account at [discogs.com](https://www.discogs.com) and request a **personal access token** for the API from [settings/developers](https://www.discogs.com/settings/developers).
 
 ### Environment variables
 
@@ -54,11 +54,38 @@ After the build the .env file is copied to .output/server, because it is require
 
 Check out the [deployment documentation](https://nuxt.com/deploy/firebase) for more information.
 
+Replace the key in `firebase.json` with your project ID.
+
+```
+{
+  ...
+  "hosting": [
+    {
+      "site": "YOUR PROJECT ID"
+    }
+  ]
+}
+```
+
+Globally install Firebase tools
+
+```
+pnpm install -g firebase-tools@latest
+```
+
+Login. No need to initialize, that has been done.
+
+```
+firebase login
+```
+
+### Deploy
+
 ```
 firebase deploy
 ```
 
-There are some issues with the server in `.output/server`. A solution is to install a specific package there, but this is done automatically in the postbuild.
+There are some issues with the server in `.output/server`. A solution is to install a specific package `@google-cloud/functions-framework` there, but this is done automatically in the postbuild script.
 
 ```
 cd .output/server
