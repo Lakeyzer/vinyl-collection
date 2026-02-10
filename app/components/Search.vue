@@ -99,7 +99,7 @@ onMounted(() => {
         >
           <template #body>
             <div class="list-item">
-              <NuxtImg :src="item.thumb" loading="lazy" />
+              <img :src="item.thumb" loading="lazy" />
               <div class="grow min-w-0">
                 <div class="truncate">{{ album(item.title) }}</div>
                 <div class="truncate text-sm text-dimmed">
