@@ -6,14 +6,15 @@ const headers = {
 };
 
 export default defineEventHandler(async (event) => {
-  const query = getQuery(event).q;
+  const { q, page, per_page } = getQuery(event);
 
   const res = await $fetch("https://api.discogs.com/database/search", {
     headers,
     params: {
-      q: query,
+      q,
       type: "master",
-      per_page: 10,
+      per_page: per_page,
+      page,
     },
   });
 
