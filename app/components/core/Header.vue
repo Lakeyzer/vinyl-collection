@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from "@nuxt/ui";
-const { user, profile, logout } = useAuth();
+const { user, profile, logout, group } = useAuth();
 const signInModal = ref(false);
 
 const items = computed<DropdownMenuItem[][]>(() => [
@@ -24,7 +24,7 @@ const items = computed<DropdownMenuItem[][]>(() => [
 <template>
   <UHeader>
     <template #left>
-      <NuxtLink to="/">Vinyl Collection</NuxtLink>
+      <NuxtLink to="/">Vinyl Collection</NuxtLink>: {{ group?.name }}
     </template>
 
     <template #right>
@@ -47,6 +47,7 @@ const items = computed<DropdownMenuItem[][]>(() => [
         </template>
       </UModal>
       <template v-else>
+        <Scan />
         <Search />
         <UDropdownMenu :items="items">
           <UButton

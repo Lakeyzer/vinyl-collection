@@ -1,6 +1,6 @@
 import { ref, onMounted } from "vue";
 import { doc, getDoc } from "firebase/firestore";
-import type { Profile } from "../../types";
+import type { Profile, Group } from "../../types";
 import {
   signInWithEmailAndPassword,
   signOut,
@@ -14,36 +14,52 @@ export function useAuth() {
   const user = ref<User | null>(null);
   const loading = ref(true);
   const error = ref<string | null>(null);
+
   const profile = useState<Profile | null>("profile", () => null);
+  const group = useState<Group | null>("profile", () => null);
 
   onMounted(() => {
     onAuthStateChanged($firebaseAuth, async (firebaseUser) => {
       user.value = firebaseUser;
-
-      if (!user.value) {
-        profile.value = null;
-        loading.value = false;
-        return;
-      }
+      loading.value = true;
 
       if (!firebaseUser) {
         profile.value = null;
+        group.value = null;
         loading.value = false;
         return;
       }
 
       try {
-        const ref = doc($firestoreDb, "users", firebaseUser.uid);
-        const snap = await getDoc(ref);
+        const userRef = doc($firestoreDb, "users", firebaseUser.uid);
+        const userSnap = await getDoc(userRef);
 
-        if (!snap.exists()) {
-          console.warn("No profile found for user", firebaseUser.uid);
-        } else {
-          profile.value = snap.data() as Profile;
+        if (!userSnap.exists()) {
+          throw new Error("User profile missing");
         }
+
+        profile.value = userSnap.data() as Profile;
+
+        const groupId = profile.value.groupId;
+        if (!groupId) {
+          throw new Error("User has no groupId");
+        }
+
+        const groupRef = doc($firestoreDb, "groups", groupId);
+        const groupSnap = await getDoc(groupRef);
+
+        if (!groupSnap.exists()) {
+          throw new Error("Group not found");
+        }
+
+        group.value = {
+          id: groupSnap.id,
+          ...(groupSnap.data() as { name: string }),
+        };
       } catch (err) {
-        console.error("Failed to load profile", err);
+        console.error("Failed to load auth context", err);
         profile.value = null;
+        group.value = null;
       } finally {
         loading.value = false;
       }
@@ -67,6 +83,7 @@ export function useAuth() {
   return {
     user,
     profile,
+    group,
     loading,
     error,
     signin,

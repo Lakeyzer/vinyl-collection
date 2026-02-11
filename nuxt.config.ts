@@ -5,6 +5,9 @@ export default defineNuxtConfig({
   devtools: {
     enabled: true,
   },
+  devServer: {
+    https: true,
+  },
   css: ["~/assets/css/main.css"],
   routeRules: {
     "/": { prerender: true },

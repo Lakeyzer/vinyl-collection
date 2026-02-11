@@ -1,6 +1,12 @@
 export interface Profile {
   email: string;
   username: string;
+  groupId: string;
+}
+
+export interface Group {
+  id: string;
+  name: string;
 }
 
 export interface Record {
