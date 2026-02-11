@@ -7,6 +7,7 @@ export function useDiscogs() {
     page,
     per_page,
     format,
+    barcode,
   }: DiscogsSearchQuery): Promise<DiscogsSearchResponse | undefined> {
     try {
       const res = await $fetch("/api/discogs/search", {
@@ -16,6 +17,7 @@ export function useDiscogs() {
           per_page: per_page || 10,
           page: page || 1,
           format,
+          barcode,
         },
       });
       return res;

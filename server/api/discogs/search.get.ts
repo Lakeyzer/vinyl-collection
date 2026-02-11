@@ -4,7 +4,7 @@ import type { DiscogsSearchQuery, DiscogsSearchResponse } from "~~/types";
 export default defineEventHandler(
   async (event): Promise<DiscogsSearchResponse> => {
     const config = useRuntimeConfig();
-    const { query, page, per_page, type, format }: DiscogsSearchQuery =
+    const { query, page, per_page, type, format, barcode }: DiscogsSearchQuery =
       getQuery(event);
 
     const headers = {
@@ -22,6 +22,7 @@ export default defineEventHandler(
           per_page: per_page,
           page,
           format,
+          barcode,
         },
       },
     );
