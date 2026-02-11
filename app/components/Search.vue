@@ -1,20 +1,33 @@
 <script setup lang="ts">
 import { useInfiniteScroll } from "@vueuse/core";
+import type { DiscogsSearchQuery, DiscogsSearchResult, Record } from "~~/types";
 
 const { search } = useDiscogs();
+const { addToCollection } = useFirestore();
+
 const pageSize = 5;
 const loading = ref(false);
 const scrollArea = ref();
 const query = ref();
 const pagination = ref();
-const results = ref([]);
+const results = ref<DiscogsSearchResult[] | undefined>([]);
 
-const searchRecords = async (event: Event) => {
+const filter = ref<DiscogsSearchQuery>({
+  type: "release",
+  format: "Vinyl",
+});
+
+const searchRecords = async (event: any) => {
   loading.value = true;
   results.value = [];
-  const response = await search(event.target?.value, 1, pageSize);
-  pagination.value = response.pagination;
-  results.value = response.results;
+  const response = await search({
+    query: event.target?.value,
+    page: 1,
+    per_page: pageSize,
+    ...filter.value,
+  });
+  pagination.value = response?.pagination;
+  results.value = response?.results;
   loading.value = false;
 };
 
@@ -22,17 +35,38 @@ const loadMore = async () => {
   loading.value = true;
   pagination.value.page++;
 
-  const response = await search(query.value, pagination.value.page, pageSize);
-  results.value = results.value.concat(response.results);
+  const response = await search({
+    query: query.value,
+    page: pagination.value.page,
+    per_page: pageSize,
+    ...filter.value,
+  });
+
+  if (response?.results?.length) {
+    results.value = results.value?.concat(response.results);
+  }
 
   loading.value = false;
 };
 
-const album = (title: string) => {
-  return title.split(" - ")?.[1];
+const album = (title: string): string => {
+  return String(title.split(" - ")?.[1]);
 };
-const artist = (title: string) => {
-  return title.split(" - ")?.[0];
+const artist = (title: string): string => {
+  return String(title.split(" - ")?.[0]);
+};
+
+const add = async (item: DiscogsSearchResult) => {
+  await addToCollection({
+    id: item.id,
+    cover_image: item.cover_image,
+    thumb: item.thumb,
+    title: item.title,
+    artist: artist(item.title),
+    album: album(item.title),
+    year: item.year,
+    resource_url: item.resource_url,
+  });
 };
 
 const reset = () => {
@@ -94,16 +128,20 @@ onMounted(() => {
           :ui="{
             body: 'w-full',
             wrapper: 'overflow-hidden',
-            container: 'p-2 sm:p-4',
+            container: 'p-2 sm:p-3',
           }"
         >
           <template #body>
             <div class="list-item">
-              <img :src="item.thumb" loading="lazy" />
+              <img :src="item.thumb" />
               <div class="grow min-w-0">
                 <div class="truncate">{{ album(item.title) }}</div>
-                <div class="truncate text-sm text-dimmed">
+                <div class="truncate text-sm text-muted">
                   {{ artist(item.title) }}
+                </div>
+                <div class="text-sm text-dimmed">
+                  <template v-if="item.year">{{ item.year }} |</template>
+                  {{ item.country }}
                 </div>
               </div>
               <div class="actions">
@@ -118,6 +156,7 @@ onMounted(() => {
                   icon="fa7-solid:plus"
                   color="neutral"
                   aria-labeled-by="Add to collection"
+                  @click="add(item as DiscogsSearchResult)"
                 />
               </div>
             </div>
@@ -125,8 +164,13 @@ onMounted(() => {
         </UPageCard>
       </UScrollArea>
     </template>
-    <template v-if="results.length" #footer>
-      <UButton :loading="loading" variant="ghost" color="neutral" class="p-0">
+    <template v-if="results?.length" #footer>
+      <UButton
+        :loading="loading"
+        variant="link"
+        color="neutral"
+        class="p-0 text-text"
+      >
         <template v-if="!loading">{{ pagination.page * pageSize }}</template> /
         {{ pagination.items }}
       </UButton>
@@ -141,7 +185,7 @@ onMounted(() => {
   @apply flex gap-4 items-center w-full;
 
   img {
-    @apply w-16;
+    @apply w-18 rounded object-cover;
   }
   .actions {
     @apply flex gap-2 items-center;

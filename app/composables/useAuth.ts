@@ -1,5 +1,6 @@
 import { ref, onMounted } from "vue";
 import { doc, getDoc } from "firebase/firestore";
+import type { Profile } from "../../types";
 import {
   signInWithEmailAndPassword,
   signOut,
@@ -13,7 +14,7 @@ export function useAuth() {
   const user = ref<User | null>(null);
   const loading = ref(true);
   const error = ref<string | null>(null);
-  const profile = useState("profile", () => null);
+  const profile = useState<Profile | null>("profile", () => null);
 
   onMounted(() => {
     onAuthStateChanged($firebaseAuth, async (firebaseUser) => {
@@ -38,7 +39,7 @@ export function useAuth() {
         if (!snap.exists()) {
           console.warn("No profile found for user", firebaseUser.uid);
         } else {
-          profile.value = snap.data();
+          profile.value = snap.data() as Profile;
         }
       } catch (err) {
         console.error("Failed to load profile", err);

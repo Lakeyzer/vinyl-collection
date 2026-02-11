@@ -3,7 +3,7 @@ import type { DropdownMenuItem } from "@nuxt/ui";
 const { user, profile, logout } = useAuth();
 const signInModal = ref(false);
 
-const items = ref<DropdownMenuItem[][]>([
+const items = computed<DropdownMenuItem[][]>(() => [
   [
     {
       label: profile.value?.username,
@@ -54,6 +54,7 @@ const items = ref<DropdownMenuItem[][]>([
             aria-label="Sign out"
             color="neutral"
             variant="ghost"
+            :loading="!profile"
           />
         </UDropdownMenu>
       </template>
