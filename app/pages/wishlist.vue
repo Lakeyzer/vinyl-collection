@@ -1,9 +1,9 @@
 <script lang="ts" setup>
-const { collection } = useCollectionGuards();
+const { wishlist } = useCollectionGuards();
 </script>
 
 <template>
   <NuxtLayout>
-    <RecordList :list="collection" />
+    <RecordList :list="wishlist" />
   </NuxtLayout>
 </template>

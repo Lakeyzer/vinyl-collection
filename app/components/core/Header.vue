@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from "@nuxt/ui";
-const { user, profile, logout, group } = useAuth();
+const { user, profile, logout } = useAuth();
 const signInModal = ref(false);
 
 const items = computed<DropdownMenuItem[][]>(() => [
@@ -9,6 +9,23 @@ const items = computed<DropdownMenuItem[][]>(() => [
       label: profile.value?.username,
       icon: "fa7-solid:user",
       type: "label",
+    },
+    {
+      label: profile.value?.group,
+      icon: "fa7-solid:home",
+      type: "label",
+    },
+  ],
+  [
+    {
+      label: "Profile",
+      icon: "fa7-solid:user",
+      to: "/profile",
+    },
+    {
+      label: "Wishlist",
+      icon: "fa7-solid:heart",
+      to: "/wishlist",
     },
   ],
   [
@@ -24,7 +41,7 @@ const items = computed<DropdownMenuItem[][]>(() => [
 <template>
   <UHeader>
     <template #left>
-      <NuxtLink to="/">Vinyl Collection</NuxtLink>: {{ group?.name }}
+      <NuxtLink to="/">Vinyl Collection</NuxtLink>
     </template>
 
     <template #right>

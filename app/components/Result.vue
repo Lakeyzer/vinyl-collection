@@ -5,21 +5,46 @@ export interface ResultsProps {
   item: DiscogsSearchResult;
 }
 
-const { addToCollection } = useFirestore();
+const { hasRelease, hasMaster, isWanted } = useCollectionGuards();
+const { addToCollection, addToWishlist } = useFirestore();
 
 const props = withDefaults(defineProps<ResultsProps>(), {});
 
-const add = async (item: DiscogsSearchResult) => {
-  await addToCollection({
+const adding = ref<number[]>([]);
+
+const itemToRecord = (item: DiscogsSearchResult) => {
+  return {
     id: item.id,
+    master_id: item.master_id,
     cover_image: item.cover_image,
     thumb: item.thumb,
     title: item.title,
     artist: artist(item.title),
     album: album(item.title),
     year: item.year,
-    resource_url: item.resource_url,
-  });
+    discogs_uri: item.uri,
+  };
+};
+
+const addCollection = async (item: DiscogsSearchResult) => {
+  adding.value.push(item.id);
+  try {
+    await addToCollection(itemToRecord(item));
+  } catch (e) {
+    console.error(e);
+  } finally {
+    adding.value = adding.value.filter((id) => id !== item.id);
+  }
+};
+const addWishlist = async (item: DiscogsSearchResult) => {
+  adding.value.push(item.id);
+  try {
+    await addToWishlist(itemToRecord(item));
+  } catch (e) {
+    console.error(e);
+  } finally {
+    adding.value = adding.value.filter((id) => id !== item.id);
+  }
 };
 </script>
 
@@ -46,19 +71,51 @@ const add = async (item: DiscogsSearchResult) => {
           </div>
         </div>
         <div class="actions">
-          <UButton
-            variant="ghost"
-            icon="fa7-solid:heart"
-            color="neutral"
-            aria-labeled-by="Add to favorites"
-          />
-          <UButton
-            variant="ghost"
-            icon="fa7-solid:plus"
-            color="neutral"
-            aria-labeled-by="Add to collection"
-            @click="add(item as DiscogsSearchResult)"
-          />
+          <UTooltip
+            :text="
+              hasMaster(item.master_id) || hasRelease(item.id)
+                ? 'You own this album'
+                : 'Add to Wishlist'
+            "
+            :content="{ side: 'top' }"
+          >
+            <UButton
+              variant="ghost"
+              icon="fa7-solid:heart"
+              color="neutral"
+              aria-labeled-by="Add to favorites"
+              :loading="adding.includes(item.id)"
+              :disabled="
+                hasMaster(item.master_id) ||
+                hasRelease(item.id) ||
+                isWanted(item.id, item.master_id)
+              "
+              @click="addWishlist(item as DiscogsSearchResult)"
+            />
+          </UTooltip>
+          <UTooltip
+            :disabled="hasRelease(item.id)"
+            :text="
+              hasMaster(item.master_id)
+                ? 'You own another release'
+                : 'Add to Collection'
+            "
+            :content="{ side: 'top' }"
+          >
+            <UButton
+              variant="ghost"
+              icon="fa7-solid:plus"
+              aria-labeled-by="Add to collection"
+              :color="
+                hasMaster(item.master_id) && !hasRelease(item.id)
+                  ? 'error'
+                  : 'neutral'
+              "
+              :loading="adding.includes(item.id)"
+              :disabled="hasRelease(item.id)"
+              @click="addCollection(item as DiscogsSearchResult)"
+            />
+          </UTooltip>
         </div>
       </div>
     </template>

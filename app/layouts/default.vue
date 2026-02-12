@@ -1,8 +1,6 @@
 <template>
   <CoreHeader />
   <UMain>
-    <UContainer>
-      <slot />
-    </UContainer>
+    <slot />
   </UMain>
 </template>
