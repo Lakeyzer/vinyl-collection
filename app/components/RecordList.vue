@@ -64,7 +64,7 @@ const lanes = computed(() => {
     @apply xl:px-[calc((100vw-1280px)/1.75)];
 
     .record {
-      @apply aspect-square relative;
+      @apply aspect-square relative drop-shadow;
 
       img {
         @apply rounded size-full object-cover;

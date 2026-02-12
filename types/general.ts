@@ -12,12 +12,12 @@ export interface Group {
 
 export interface Release {
   id: number;
-  master_id?: number;
+  master_id?: number | null;
   cover_image: string;
   thumb: string;
   title: string;
   artist: string;
   album: string;
-  year?: string;
+  year?: string | null;
   discogs_uri: string;
 }

@@ -84,6 +84,12 @@ function reset() {
           <Result :item="item" />
         </UScrollArea>
       </template>
+      <div
+        v-if="barcode && results?.length === 0"
+        class="text-dimmed text-center"
+      >
+        Nothing found
+      </div>
     </template>
     <template v-if="barcode" #footer>
       <UButton

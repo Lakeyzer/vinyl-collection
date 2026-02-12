@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { useInfiniteScroll } from "@vueuse/core";
-import type {
-  DiscogsSearchQuery,
-  DiscogsSearchResult,
-  Release,
-} from "~~/types";
+import type { DiscogsSearchQuery, DiscogsSearchResult } from "~~/types";
 
 const { search } = useDiscogs();
 
@@ -13,7 +9,7 @@ const loading = ref(false);
 const scrollArea = ref();
 const query = ref();
 const pagination = ref();
-const results = ref<DiscogsSearchResult[] | undefined>([]);
+const results = ref<DiscogsSearchResult[] | undefined>(undefined);
 
 const filter = ref<DiscogsSearchQuery>({
   type: "release",
@@ -22,7 +18,7 @@ const filter = ref<DiscogsSearchQuery>({
 
 const searchRecords = async (event: any) => {
   loading.value = true;
-  results.value = [];
+  results.value = undefined;
   const response = await search({
     query: event.target?.value,
     page: 1,
@@ -55,7 +51,7 @@ const loadMore = async () => {
 const reset = () => {
   query.value = null;
   pagination.value = null;
-  results.value = [];
+  results.value = undefined;
 };
 
 onMounted(() => {
@@ -92,7 +88,8 @@ onMounted(() => {
         placeholder="Search Records"
         variant="none"
         icon="fa7-solid:magnifying-glass"
-        class="w-full"
+        class="w-full pr-6"
+        type="search"
         :loading="loading"
         @keyup.enter="searchRecords"
       />
@@ -108,6 +105,12 @@ onMounted(() => {
       >
         <Result :item="item" />
       </UScrollArea>
+      <div
+        v-if="query && results?.length === 0"
+        class="p-4 text-dimmed text-center"
+      >
+        Nothing found
+      </div>
     </template>
     <template v-if="results?.length" #footer>
       <UButton

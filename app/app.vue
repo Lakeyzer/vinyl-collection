@@ -1,4 +1,6 @@
 <script setup>
+const toaster = { position: "top-center" };
+
 useHead({
   meta: [{ name: "viewport", content: "width=device-width, initial-scale=1" }],
   link: [{ rel: "icon", href: "/favicon.ico" }],
@@ -22,7 +24,7 @@ useSeoMeta({
 </script>
 
 <template>
-  <UApp>
+  <UApp :toaster="toaster">
     <NuxtPage />
   </UApp>
 </template>
