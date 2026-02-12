@@ -1,6 +1,7 @@
 export interface Profile {
   email: string;
   username: string;
+  group: string;
   groupId: string;
 }
 
@@ -9,7 +10,7 @@ export interface Group {
   name: string;
 }
 
-export interface Record {
+export interface Release {
   id: number;
   master_id?: number;
   cover_image: string;
@@ -18,5 +19,5 @@ export interface Record {
   artist: string;
   album: string;
   year?: string;
-  resource_url: string;
+  discogs_uri: string;
 }

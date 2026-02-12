@@ -1,13 +1,32 @@
-export default defineNuxtPlugin(async (nuxtApp) => {
-  const { group } = useAuth();
-  const { fetchCollection, fetchWishlist } = useFirestore();
-  const collectionData = useState("collection", () => []);
-  const wishlistData = useState("wishlist", () => []);
+import type { Release } from "~~/types";
 
-  watch(group, async (g) => {
-    if (g?.id) {
-      collectionData.value = await fetchCollection(g.id);
-      wishlistData.value = await fetchWishlist(g.id);
+export default defineNuxtPlugin(async (nuxtApp) => {
+  const { profile } = useAuth();
+  const { onCollection, onWishlist } = useFirestore();
+  const collections = useState<{ [key: string]: Release[] }>(
+    "collections",
+    () => ({}) as { [key: string]: Release[] },
+  );
+  const wishlists = useState<{ [key: string]: Release[] }>(
+    "wishlists",
+    () => ({}) as { [key: string]: Release[] },
+  );
+
+  watch(profile, async (p) => {
+    if (p?.groupId) {
+      const unsubCollection = onCollection(p.groupId, (data) => {
+        collections.value[p.groupId] = data;
+      });
+
+      const unsubWishlist = onWishlist(p.groupId, (data) => {
+        wishlists.value[p.groupId] = data;
+      });
+
+      // cleanup when user changes
+      onScopeDispose(() => {
+        unsubCollection();
+        unsubWishlist();
+      });
     }
   });
 });

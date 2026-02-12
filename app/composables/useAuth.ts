@@ -16,7 +16,6 @@ export function useAuth() {
   const error = ref<string | null>(null);
 
   const profile = useState<Profile | null>("profile", () => null);
-  const group = useState<Group | null>("profile", () => null);
 
   onMounted(() => {
     onAuthStateChanged($firebaseAuth, async (firebaseUser) => {
@@ -25,7 +24,6 @@ export function useAuth() {
 
       if (!firebaseUser) {
         profile.value = null;
-        group.value = null;
         loading.value = false;
         return;
       }
@@ -52,14 +50,10 @@ export function useAuth() {
           throw new Error("Group not found");
         }
 
-        group.value = {
-          id: groupSnap.id,
-          ...(groupSnap.data() as { name: string }),
-        };
+        profile.value.group = groupSnap.data()?.name;
       } catch (err) {
         console.error("Failed to load auth context", err);
         profile.value = null;
-        group.value = null;
       } finally {
         loading.value = false;
       }
@@ -83,7 +77,6 @@ export function useAuth() {
   return {
     user,
     profile,
-    group,
     loading,
     error,
     signin,

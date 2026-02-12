@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { useInfiniteScroll } from "@vueuse/core";
-import type { DiscogsSearchQuery, DiscogsSearchResult, Record } from "~~/types";
+import type {
+  DiscogsSearchQuery,
+  DiscogsSearchResult,
+  Release,
+} from "~~/types";
 
 const { search } = useDiscogs();
 
