@@ -1,26 +1,109 @@
-# Vinyl Collection Tracker
+# 🎶 Vinyl Collection Tracker
 
-Track your vinyl collection and manage a wish list.
+Track your vinyl collection and manage your wishlist.  
+Built for small groups/households who want to track and share their collection and wish list.
 
-## Setup
+## ✨ Features
 
-Make sure to install the dependencies:
+- 💿 Maintain vinyl collection
+- ⭐ Maintain Wishlist
+- 🔎 Discogs search integration
+- 📷 Scan barcode to find records on Discogs
+- ☁️ Hosted on Firebase (Functions + Hosting)
+
+## 🧱 Tech Stack
+
+- **Node**: `24`
+
+**Frontend**
+
+- **Nuxt**: `4`
+- **Nuxt UI**: `4`
+- **Vue**: `3`
+- **TypeScript**
+
+**Backend / Infra**
+
+- **Firebase Authentication**
+- **Firestore Database**
+- **Firebase Functions**
+- **Firebase Hosting**
+
+**External APIs**
+
+- **Discogs API**
+
+**Package Manager**
+
+- **pnpm**: `10`
+
+## 🚀 Setup
+
+### Install dependencies
 
 ```bash
 pnpm install
 ```
 
-### Firebase
+## 🔥 Firebase Setup
 
-Start a new project on [firebase](https://console.firebase.google.com/).
+1. Create a new Firebase project  
+   👉 https://console.firebase.google.com/
+2. Enable:
+   - **Authentication → Sign-in method → Email/Password**
+   - **Firestore Database**
+   - **Hosting**
+   - **Functions**
 
-### Discogs API
+### 🔐 Firestore Security Rules
 
-Create a discogs account at [discogs.com](https://www.discogs.com) and request a **personal access token** for the API from [settings/developers](https://www.discogs.com/settings/developers).
+This project assumes:
 
-### Environment variables
+- Users belong to exactly one group
+- Collections & wishlists belong to groups
+- Users can only add for their own group
+- Collections and Wishlists are publicly readable
 
-Create a `.env` file
+#### Copy Firestore Rules
+
+Copy rules from `firestore-rules.js` to **Firestore Database → Rules**.
+
+### 🧪 First-Time Setup (Important)
+
+Because sign-ups are not public:
+
+1. Manually create users: **Authentication → Users → Add user**
+2. Create user documents in **Firestore Database → Data**:
+
+```json
+/users/{uuid}: {
+  "email": "user@example.com",
+  "username": "Username",
+  "groupId": "groupId",
+  "passwordChanged": false,
+}
+```
+
+3. Create group document
+
+```json
+/groups/{groupId}: {
+  "name": "Group name",
+}
+```
+
+Without this, users will get “**Missing or insufficient permissions**” errors.
+
+## 💿 Discogs API
+
+Create a Discogs account:
+👉 https://www.discogs.com  
+Generate a Personal Access Token:
+👉 https://www.discogs.com/settings/developers
+
+## 🔐 Environment Variables
+
+Create a .env file in the project root:
 
 ```
 NUXT_FIREBASE_API_KEY=
@@ -29,66 +112,94 @@ NUXT_FIREBASE_PROJECT_ID=
 NUXT_FIREBASE_STORAGE_BUCKET=
 NUXT_FIREBASE_MESSAGING_SENDER_ID=
 NUXT_FIREBASE_APP_ID=
+
 DISCOGS_ACCESS_TOKEN=
 ```
 
-## Development Server
+> ℹ️ DISCOGS_ACCESS_TOKEN is used on the server (Nitro/Firebase Functions).  
+> The Nuxt Firebase keys are safe to expose publicly. Data is secured by rules.
 
-Start the development server on `http://localhost:3000`:
+## 🧑‍💻 Development
+
+Run the dev server:
 
 ```bash
 pnpm dev
 ```
 
-## Production
+App runs on:
 
-Build the application for production:
+```
+https://localhost:3000
+```
+
+## 🏗️ Production Build
 
 ```bash
-pnpm build
+pnpm run build
 ```
 
-After the build the .env file is copied to .output/server, because it is required there.
+After building, the .env file is copied to:
 
-## Deployment to Firebase
-
-Check out the [deployment documentation](https://nuxt.com/deploy/firebase) for more information.
-
-Replace the key in `firebase.json` with your project ID.
-
+```bash
+.output/server
 ```
+
+This is required for Firebase Functions to access the Discogs token.
+
+## ☁️ Deployment to Firebase
+
+Nuxt deployment docs:
+👉 https://nuxt.com/deploy/firebase
+
+> ℹ️ The project doesn't have to be hosted on Firebase.  
+> Check the Nuxt docs for other ways to deploy 👉 https://nuxt.com/docs/4.x/getting-started/deployment
+
+### Install Firebase CLI
+
+```bash
+pnpm install -g firebase-tools@latest
+```
+
+Login:
+
+```bash
+firebase login
+```
+
+### Configure `firebase.json`
+
+Replace the site name with your Firebase project ID:
+
+```json
 {
-  ...
   "hosting": [
     {
-      "site": "YOUR PROJECT ID"
+      "site": "YOUR_PROJECT_ID"
     }
   ]
 }
 ```
 
-Globally install Firebase tools
-
-```
-pnpm install -g firebase-tools@latest
-```
-
-Login. No need to initialize, that has been done.
-
-```
-firebase login
-```
-
 ### Deploy
 
-```
+```bash
 firebase deploy
 ```
 
-There are some issues with the server in `.output/server`. A solution is to install a specific package `@google-cloud/functions-framework` there, but this is done automatically in the postbuild script.
+### ⚠️ Known Firebase Functions Quirk
+
+Sometimes Firebase Functions complains about missing dependencies inside .output/server.
+This project automatically fixes this in postbuild, but if deployment fails, run:
 
 ```
 cd .output/server
 pnpm add @google-cloud/functions-framework
 cd ../../
 ```
+
+## 🧠 Notes
+
+- This app is designed for **self-hosting / private use**
+- No public sign-ups
+- Discogs API is rate-limited, don’t spam it
