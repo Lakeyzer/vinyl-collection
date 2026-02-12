@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { DiscogsSearchQuery, DiscogsSearchResult, Record } from "~~/types";
+import type { DiscogsSearchResult } from "~~/types";
 
 const loading = ref(false);
 const video = ref<HTMLVideoElement | null>(null);

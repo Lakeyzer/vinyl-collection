@@ -4,24 +4,23 @@ import type { Record } from "~~/types";
 
 export function useFirestore() {
   const { $firestoreDb } = useNuxtApp();
-  const { user } = useAuth();
+  const { group } = useAuth();
+
+  async function fetchCollection(groupId: string) {}
+  async function fetchWishlist(groupId: string) {}
 
   /**
    * Add a record to the collection
    * @param data Partial data for the record
    */
   async function addToCollection(data: Record) {
-    if (!user.value) {
-      throw new Error("User not signed in");
-    }
+    if (!group.value) throw new Error("No group loaded");
 
-    const docRef = await addDoc(collection($firestoreDb, "collection"), {
+    return addDoc(collection($firestoreDb, "collections"), {
       ...data,
-      userId: user.value.uid,
+      groupId: group.value.id,
       createdAt: serverTimestamp(),
     });
-
-    return docRef.id;
   }
 
   return {

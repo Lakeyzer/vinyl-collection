@@ -11,6 +11,7 @@ export interface Group {
 
 export interface Record {
   id: number;
+  master_id?: number;
   cover_image: string;
   thumb: string;
   title: string;

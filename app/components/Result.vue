@@ -9,17 +9,27 @@ const { addToCollection } = useFirestore();
 
 const props = withDefaults(defineProps<ResultsProps>(), {});
 
+const adding = ref<number[]>([]);
+
 const add = async (item: DiscogsSearchResult) => {
-  await addToCollection({
-    id: item.id,
-    cover_image: item.cover_image,
-    thumb: item.thumb,
-    title: item.title,
-    artist: artist(item.title),
-    album: album(item.title),
-    year: item.year,
-    resource_url: item.resource_url,
-  });
+  adding.value.push(item.id);
+  try {
+    await addToCollection({
+      id: item.id,
+      master_id: item.master_id,
+      cover_image: item.cover_image,
+      thumb: item.thumb,
+      title: item.title,
+      artist: artist(item.title),
+      album: album(item.title),
+      year: item.year,
+      resource_url: item.resource_url,
+    });
+  } catch (e) {
+    console.error(e);
+  } finally {
+    adding.value = adding.value.filter((id) => id !== item.id);
+  }
 };
 </script>
 
@@ -51,12 +61,14 @@ const add = async (item: DiscogsSearchResult) => {
             icon="fa7-solid:heart"
             color="neutral"
             aria-labeled-by="Add to favorites"
+            :loading="adding.includes(item.id)"
           />
           <UButton
             variant="ghost"
             icon="fa7-solid:plus"
             color="neutral"
             aria-labeled-by="Add to collection"
+            :loading="adding.includes(item.id)"
             @click="add(item as DiscogsSearchResult)"
           />
         </div>
