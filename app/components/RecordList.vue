@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useElementSize } from "@vueuse/core";
-import type { ReleaseDoc } from "~~/types";
+import type { ReleaseDoc, SortOption } from "~~/types";
 
 export interface RecordListProps {
   list: ReleaseDoc[];
@@ -10,6 +10,17 @@ export interface RecordListProps {
 const props = withDefaults(defineProps<RecordListProps>(), {
   type: "collection",
 });
+
+const sort: SortOption[] = [
+  { key: "artist", dir: "asc" },
+  { key: "album", dir: "asc" },
+];
+
+const search = ref();
+const sortedList = computed(() => sortRecords(props.list, sort));
+const filteredList = computed(() =>
+  filterRecords(sortedList.value, search.value),
+);
 
 const scrollArea = ref<HTMLElement | null>(null);
 const { width } = useElementSize(scrollArea);
@@ -46,17 +57,19 @@ const move = async (docId: ReleaseDoc["docId"]) => {
 <template>
   <div v-if="list" class="record-list" ref="scrollArea">
     <UContainer>
-      <div class="flex justify-between">
+      <div class="flex justify-between items-center gap-2">
         <UInput
+          v-model="search"
           type="search"
           placeholder="Search album or artist"
           icon="fa7-solid:magnifying-glass"
         />
-        <div class="tabular-nums">{{ list?.length }}</div>
+        <div class="tabular-nums">{{ filteredList?.length }}</div>
       </div>
     </UContainer>
     <UScrollArea
-      :items="list"
+      v-if="filteredList?.length"
+      :items="filteredList"
       v-slot="{ item }"
       :virtualize="{
         lanes,
@@ -108,6 +121,9 @@ const move = async (docId: ReleaseDoc["docId"]) => {
         </template>
       </UModal>
     </UScrollArea>
+    <div v-else class="w-full p-4 text-center text-dimmed text-lg">
+      Nothing found
+    </div>
   </div>
 </template>
 

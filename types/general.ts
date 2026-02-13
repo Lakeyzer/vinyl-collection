@@ -25,3 +25,11 @@ export interface Release {
 export interface ReleaseDoc extends Release {
   docId: string;
 }
+
+export type SortKey = "artist" | "album" | "year" | "createdAt";
+export type SortDirection = "asc" | "desc";
+
+export interface SortOption {
+  key: SortKey;
+  dir: SortDirection;
+}
