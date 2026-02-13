@@ -69,6 +69,7 @@ const addWishlist = async (item: DiscogsSearchResult) => {
     class="rounded-none"
     :ui="{
       body: 'w-full',
+      wrapper: 'overflow-hidden',
       container: 'p-2 sm:p-3 overflow-hidden',
     }"
   >

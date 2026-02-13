@@ -2,22 +2,50 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isAllowedUser() {
-      return request.auth != null
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    function isAuthed() {
+      return request.auth != null;
+    }
+
+    function userGroup() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.groupId;
+    }
+
+    function sameGroup(groupId) {
+      return isAuthed() && userGroup() == groupId;
     }
 
     match /users/{uid} {
+      allow read: if isAuthed() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    match /groups/{groupId} {
+      allow read: if isAuthed() && userGroup() == groupId;
+      allow write: if false;
+    }
+
+    match /collections/{docId} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == uid;
+
+      allow create: if sameGroup(request.resource.data.groupId);
+
+      allow update: if
+        sameGroup(resource.data.groupId) &&
+        request.resource.data.groupId == resource.data.groupId;
+
+      allow delete: if sameGroup(resource.data.groupId);
     }
 
-    match /collection/{docId} {
-      allow read, write: if isAllowedUser();
-    }
+    match /wishlists/{docId} {
+      allow read: if true;
 
-    match /wishlist/{docId} {
-      allow read, write: if isAllowedUser();
+      allow create: if sameGroup(request.resource.data.groupId);
+
+      allow update: if
+        sameGroup(resource.data.groupId) &&
+        request.resource.data.groupId == resource.data.groupId;
+
+      allow delete: if sameGroup(resource.data.groupId);
     }
   }
 }

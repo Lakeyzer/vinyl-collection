@@ -1,15 +1,15 @@
-import type { Release } from "~~/types";
+import type { ReleaseDoc } from "~~/types";
 
 export default defineNuxtPlugin(async (nuxtApp) => {
   const { profile } = useAuth();
   const { onCollection, onWishlist } = useFirestore();
-  const collections = useState<{ [key: string]: Release[] }>(
+  const collections = useState<{ [key: string]: ReleaseDoc[] }>(
     "collections",
-    () => ({}) as { [key: string]: Release[] },
+    () => ({}) as { [key: string]: ReleaseDoc[] },
   );
-  const wishlists = useState<{ [key: string]: Release[] }>(
+  const wishlists = useState<{ [key: string]: ReleaseDoc[] }>(
     "wishlists",
-    () => ({}) as { [key: string]: Release[] },
+    () => ({}) as { [key: string]: ReleaseDoc[] },
   );
 
   watch(profile, async (p) => {

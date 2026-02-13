@@ -2,6 +2,7 @@ import {
   doc,
   addDoc,
   updateDoc,
+  deleteDoc,
   collection,
   serverTimestamp,
   query,
@@ -9,6 +10,7 @@ import {
   onSnapshot,
   arrayRemove,
   arrayUnion,
+  runTransaction,
 } from "firebase/firestore";
 import { useAuth } from "./useAuth";
 import type { Release } from "~~/types";
@@ -16,41 +18,68 @@ import type { Release } from "~~/types";
 export function useFirestore() {
   const { $firestoreDb } = useNuxtApp();
   const { profile, user } = useAuth();
+  const { isWanted } = useCollectionGuards();
+
+  function assertGroup() {
+    if (!profile.value?.groupId) {
+      throw new Error("No group loaded");
+    }
+    if (!user.value) {
+      throw new Error("Not authenticated");
+    }
+    return {
+      groupId: profile.value.groupId,
+      uid: user.value.uid,
+    };
+  }
 
   /**
-   * Add a record to the collection
-   * @param data Partial data for the record
+   * ADD TO COLLECTION
    */
   async function addToCollection(data: Release) {
-    if (!profile.value?.groupId) throw new Error("No group loaded");
+    const { groupId, uid } = assertGroup();
 
     return addDoc(collection($firestoreDb, "collections"), {
       ...data,
-      groupId: profile.value.groupId,
-      createdBy: user.value?.uid,
+      groupId,
+      createdBy: uid,
       createdAt: serverTimestamp(),
     });
   }
 
   /**
-   * Add a record to the wishlist
-   * @param data Partial data for the record
+   * REMOVE FROM COLLECTION
+   */
+  async function removeFromCollection(collectionId: string) {
+    const ref = doc($firestoreDb, "collections", collectionId);
+    return deleteDoc(ref);
+  }
+
+  /**
+   * ADD TO WISHLIST
    */
   async function addToWishlist(data: Release) {
-    if (!profile.value?.groupId) throw new Error("No group loaded");
+    const { groupId, uid } = assertGroup();
 
     return addDoc(collection($firestoreDb, "wishlists"), {
       ...data,
-      groupId: profile.value.groupId,
-      wantedBy: [user.value?.uid],
-      createdBy: user.value?.uid,
+      groupId,
+      wantedBy: [uid],
+      createdBy: uid,
       createdAt: serverTimestamp(),
     });
   }
 
   /**
-   * Join a record on the wishlist
-   * @param wishId
+   * REMOVE FROM WISHLIST
+   */
+  async function removeFromWishlist(wishId: string) {
+    const ref = doc($firestoreDb, "wishlists", wishId);
+    return deleteDoc(ref);
+  }
+
+  /**
+   * JOIN WISH
    */
   async function joinWish(wishId: string) {
     if (!user.value) return;
@@ -62,8 +91,7 @@ export function useFirestore() {
   }
 
   /**
-   * Leave a record on the wishlist
-   * @param wishId
+   * LEAVE WISH
    */
   async function leaveWish(wishId: string) {
     if (!user.value) return;
@@ -74,41 +102,74 @@ export function useFirestore() {
     });
   }
 
+  /**
+   * MOVE WISH → COLLECTION (ATOMIC)
+   */
+  async function moveWishToCollection(wishId: string) {
+    const { groupId, uid } = assertGroup();
+
+    const wishRef = doc($firestoreDb, "wishlists", wishId);
+    const colRef = collection($firestoreDb, "collections");
+
+    return runTransaction($firestoreDb, async (tx) => {
+      const snap = await tx.get(wishRef);
+
+      if (!snap.exists()) {
+        throw new Error("Wish no longer exists");
+      }
+
+      const data = snap.data();
+
+      // Add to collection
+      tx.set(doc(colRef), {
+        ...data,
+        groupId,
+        createdBy: uid,
+        createdAt: serverTimestamp(),
+      });
+
+      // Remove from wishlist
+      tx.delete(wishRef);
+    });
+  }
+
+  /**
+   * REALTIME COLLECTION
+   */
   function onCollection(groupId: string, callback: (data: any[]) => void) {
     const q = query(
       collection($firestoreDb, "collections"),
       where("groupId", "==", groupId),
     );
 
-    // Listen for realtime changes
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-      callback(docs);
+    return onSnapshot(q, (snapshot) => {
+      callback(snapshot.docs.map((d) => ({ docId: d.id, ...d.data() })));
     });
-
-    return unsubscribe; // you can call this to stop listening
   }
 
+  /**
+   * REALTIME WISHLIST
+   */
   function onWishlist(groupId: string, callback: (data: any[]) => void) {
     const q = query(
       collection($firestoreDb, "wishlists"),
       where("groupId", "==", groupId),
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-      callback(docs);
+    return onSnapshot(q, (snapshot) => {
+      callback(snapshot.docs.map((d) => ({ docId: d.id, ...d.data() })));
     });
-
-    return unsubscribe;
   }
 
   return {
     onCollection,
     onWishlist,
     addToCollection,
+    removeFromCollection,
     addToWishlist,
+    removeFromWishlist,
     joinWish,
     leaveWish,
+    moveWishToCollection,
   };
 }

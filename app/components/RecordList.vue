@@ -1,15 +1,20 @@
 <script lang="ts" setup>
 import { useElementSize } from "@vueuse/core";
-import type { Release } from "~~/types";
+import type { ReleaseDoc } from "~~/types";
 
 export interface RecordListProps {
-  list: Release[];
+  list: ReleaseDoc[];
+  type?: "collection" | "wishlist";
 }
 
-const props = withDefaults(defineProps<RecordListProps>(), {});
+const props = withDefaults(defineProps<RecordListProps>(), {
+  type: "collection",
+});
 
 const scrollArea = ref<HTMLElement | null>(null);
 const { width } = useElementSize(scrollArea);
+const { removeFromCollection, removeFromWishlist, moveWishToCollection } =
+  useFirestore();
 
 const lanes = computed(() => {
   if (width.value > 1536) return 11;
@@ -19,10 +24,37 @@ const lanes = computed(() => {
   if (width.value > 640) return 3;
   return 2;
 });
+
+const openModals = useState<Record<string, boolean>>("open-modals", () => ({}));
+
+const remove = async (docId: ReleaseDoc["docId"]) => {
+  if (props.type === "collection") {
+    await removeFromCollection(docId);
+  }
+  if (props.type === "wishlist") {
+    await removeFromWishlist(docId);
+  }
+  openModals.value[docId] = false;
+};
+
+const move = async (docId: ReleaseDoc["docId"]) => {
+  moveWishToCollection(docId);
+  openModals.value[docId] = false;
+};
 </script>
 
 <template>
   <div v-if="list" class="record-list" ref="scrollArea">
+    <UContainer>
+      <div class="flex justify-between">
+        <UInput
+          type="search"
+          placeholder="Search album or artist"
+          icon="fa7-solid:magnifying-glass"
+        />
+        <div class="tabular-nums">{{ list?.length }}</div>
+      </div>
+    </UContainer>
     <UScrollArea
       :items="list"
       v-slot="{ item }"
@@ -32,22 +64,49 @@ const lanes = computed(() => {
       }"
       class="scroll-area"
     >
-      <div class="record">
-        <img :src="item.cover_image" loading="lazy" class="" />
-        <div class="overlay">
-          <UTooltip text="View on Discogs" :content="{ side: 'top' }">
+      <UModal
+        v-model:open="openModals[item.docId]"
+        :title="item.album"
+        :description="item.artist"
+      >
+        <div class="record">
+          <img :src="item.cover_image" loading="lazy" />
+        </div>
+        <template #body>
+          <img
+            :src="item.cover_image"
+            class="object-center object-contain h-52 w-full"
+          />
+        </template>
+        <template #footer>
+          <div class="flex justify-between w-full gap-2">
             <UButton
               :href="`https://discogs.com${item.discogs_uri}`"
               target="_blank"
               rel="noopener"
+              label="View on Discogs"
               color="neutral"
-              variant="soft"
-              icon="fa7-solid:external-link"
+              variant="link"
               size="sm"
+              trailing-icon="fa7-solid:external-link"
+              external
             />
-          </UTooltip>
-        </div>
-      </div>
+            <div class="flex justify-end gap-2">
+              <UButton
+                :label="`Remove from ${type}`"
+                color="error"
+                icon="fa7-solid:trash-alt"
+                @click="remove(item.docId)"
+              />
+              <UButton
+                v-if="type === 'wishlist'"
+                label="Got it!"
+                @click="move(item.docId)"
+              />
+            </div>
+          </div>
+        </template>
+      </UModal>
     </UScrollArea>
   </div>
 </template>
@@ -59,7 +118,7 @@ const lanes = computed(() => {
   @apply pt-4 h-[calc(100vh-var(--ui-header-height))];
 
   .scroll-area {
-    @apply w-full h-full p-4;
+    @apply w-full p-4;
     @apply lg:px-8;
     @apply xl:px-[calc((100vw-1280px)/1.75)];
 

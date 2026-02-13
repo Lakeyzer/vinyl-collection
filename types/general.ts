@@ -21,3 +21,7 @@ export interface Release {
   year?: string | null;
   discogs_uri: string;
 }
+
+export interface ReleaseDoc extends Release {
+  docId: string;
+}

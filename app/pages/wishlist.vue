@@ -4,6 +4,6 @@ const { wishlist } = useCollectionGuards();
 
 <template>
   <NuxtLayout>
-    <RecordList :list="wishlist" />
+    <RecordList :list="wishlist" type="wishlist" />
   </NuxtLayout>
 </template>

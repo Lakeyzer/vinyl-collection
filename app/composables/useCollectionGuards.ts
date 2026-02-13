@@ -1,9 +1,9 @@
-import type { Release } from "~~/types";
+import type { ReleaseDoc } from "~~/types";
 
 export function useCollectionGuards() {
   const { profile } = useAuth();
-  const collections = useState<{ [key: string]: Release[] }>("collections");
-  const wishlists = useState<{ [key: string]: Release[] }>("wishlists");
+  const collections = useState<{ [key: string]: ReleaseDoc[] }>("collections");
+  const wishlists = useState<{ [key: string]: ReleaseDoc[] }>("wishlists");
 
   const collection = computed(() => {
     if (!profile.value?.groupId) return [];
@@ -35,14 +35,16 @@ export function useCollectionGuards() {
   });
 
   function hasRelease(releaseId: number) {
+    if (!releaseId) return false;
     return releaseIds.value.has(releaseId);
   }
 
   function hasMaster(masterId: number) {
+    if (!masterId) return false;
     return masterIds.value.has(masterId);
   }
 
-  function isWanted(releaseId: number, masterId: number) {
+  function isWanted(releaseId: number, masterId?: number) {
     if (masterId && wantedRecords.value.has(`m:${masterId}`)) return true;
     if (releaseId && wantedRecords.value.has(`r:${releaseId}`)) return true;
     return false;
