@@ -6,6 +6,9 @@ export const album = (title: string): string => {
 export const artist = (title: string): string => {
   return String(title.split(" - ")?.[0]);
 };
+export const isSingle = (format?: string[]) => {
+  return format?.includes('7"') || format?.includes("Single");
+};
 
 export function compareValues(a: any, b: any, dir: "asc" | "desc") {
   if (a == null && b == null) return 0;

@@ -11,22 +11,34 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     "wishlists",
     () => ({}) as { [key: string]: ReleaseDoc[] },
   );
+  const collectionsLoading = useState<Record<string, boolean>>(
+    "collectionsLoading",
+    () => ({}) as Record<string, boolean>,
+  );
+  const wishlistsLoading = useState<Record<string, boolean>>(
+    "wishlistsLoading",
+    () => ({}) as Record<string, boolean>,
+  );
 
   watch(profile, async (p) => {
-    if (p?.groupId) {
-      const unsubCollection = onCollection(p.groupId, (data) => {
-        collections.value[p.groupId] = data;
-      });
+    if (!p?.groupId) return;
 
-      const unsubWishlist = onWishlist(p.groupId, (data) => {
-        wishlists.value[p.groupId] = data;
-      });
+    const groupId = p.groupId;
 
-      // cleanup when user changes
-      onScopeDispose(() => {
-        unsubCollection();
-        unsubWishlist();
-      });
-    }
+    const unsubCollection = onCollection(groupId, (data) => {
+      collections.value[groupId] = data;
+      collectionsLoading.value[groupId] = false;
+    });
+
+    const unsubWishlist = onWishlist(groupId, (data) => {
+      wishlists.value[groupId] = data;
+      wishlistsLoading.value[groupId] = false;
+    });
+
+    // cleanup when user changes
+    onScopeDispose(() => {
+      unsubCollection();
+      unsubWishlist();
+    });
   });
 });
