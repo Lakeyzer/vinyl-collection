@@ -9,7 +9,7 @@ export default defineEventHandler(
 
     const headers = {
       Authorization: `Discogs token=${config.discogsToken}`,
-      "User-Agent": "VinylCollection/0.1 +https://vinyl.keyroos.nl",
+      "User-Agent": config.discogsUserAgent,
     };
 
     const response: DiscogsSearchResponse = await $fetch(

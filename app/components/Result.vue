@@ -7,16 +7,19 @@ export interface ResultsProps {
 
 const { hasRelease, hasMaster, isWanted } = useCollectionGuards();
 const { addToCollection, addToWishlist } = useFirestore();
+const { fetchMaster } = useDiscogs();
 const toast = useToast();
 
 const props = withDefaults(defineProps<ResultsProps>(), {});
+const sevenInch = '7"';
 
 const adding = ref<number[]>([]);
 
-const itemToRecord = (item: DiscogsSearchResult) => {
+const itemToRecord = (item: DiscogsSearchResult, master_year?: number) => {
   return {
     id: item.id,
     master_id: item.master_id || null,
+    master_year: master_year || null,
     cover_image: item.cover_image,
     thumb: item.thumb,
     title: item.title,
@@ -24,13 +27,18 @@ const itemToRecord = (item: DiscogsSearchResult) => {
     album: album(item.title),
     year: item.year || null,
     discogs_uri: item.uri,
+    format: item.format,
   };
 };
 
 const addCollection = async (item: DiscogsSearchResult) => {
   adding.value.push(item.id);
   try {
-    await addToCollection(itemToRecord(item));
+    let master;
+    if (item.master_id) {
+      master = await fetchMaster(item.master_id);
+    }
+    await addToCollection(itemToRecord(item, master?.year));
     toast.add({
       title: "Success",
       description: `${item.title} added to Collection`,
@@ -50,7 +58,11 @@ const addCollection = async (item: DiscogsSearchResult) => {
 const addWishlist = async (item: DiscogsSearchResult) => {
   adding.value.push(item.id);
   try {
-    await addToWishlist(itemToRecord(item));
+    let master;
+    if (item.master_id) {
+      master = await fetchMaster(item.master_id);
+    }
+    await addToWishlist(itemToRecord(item, master?.year));
     toast.add({
       title: "Success",
       description: `${item.title} added to Wishlist`,
@@ -85,6 +97,24 @@ const addWishlist = async (item: DiscogsSearchResult) => {
             <template v-if="item.year">{{ item.year }} |</template>
             {{ item.country }}
           </div>
+          <div>
+            <UBadge
+              v-if="item.format?.includes(sevenInch)"
+              color="info"
+              variant="subtle"
+              size="sm"
+              class="mr-2"
+              >Single</UBadge
+            >
+            <UBadge
+              v-if="item.format?.includes('Limited Edition')"
+              color="primary"
+              size="sm"
+              variant="subtle"
+            >
+              Limited Edition
+            </UBadge>
+          </div>
         </div>
         <div class="actions">
           <UTooltip
@@ -99,6 +129,7 @@ const addWishlist = async (item: DiscogsSearchResult) => {
               variant="soft"
               icon="fa7-solid:heart"
               color="neutral"
+              size="lg"
               aria-labeled-by="Add to favorites"
               :loading="adding.includes(item.id)"
               :disabled="
@@ -121,6 +152,7 @@ const addWishlist = async (item: DiscogsSearchResult) => {
             <UButton
               :variant="'soft'"
               icon="fa7-solid:plus"
+              size="lg"
               aria-labeled-by="Add to collection"
               :color="
                 hasMaster(item.master_id) && !hasRelease(item.id)
@@ -145,7 +177,7 @@ const addWishlist = async (item: DiscogsSearchResult) => {
   @apply flex gap-4 items-center;
 
   img {
-    @apply w-18 rounded object-cover;
+    @apply w-18 rounded object-cover self-start;
   }
   .actions {
     @apply flex gap-2 items-center;

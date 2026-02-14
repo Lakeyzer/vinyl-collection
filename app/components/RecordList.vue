@@ -15,7 +15,6 @@ const sort: SortOption[] = [
   { key: "artist", dir: "asc" },
   { key: "album", dir: "asc" },
 ];
-
 const search = ref();
 const sortedList = computed(() => sortRecords(props.list, sort));
 const filteredList = computed(() =>
@@ -28,13 +27,17 @@ const { removeFromCollection, removeFromWishlist, moveWishToCollection } =
   useFirestore();
 
 const lanes = computed(() => {
-  if (width.value > 1536) return 11;
-  if (width.value > 1280) return 9;
+  if (width.value > 1536) return 9;
+  if (width.value > 1280) return 7;
   if (width.value > 1024) return 7;
   if (width.value > 768) return 5;
   if (width.value > 640) return 3;
   return 2;
 });
+
+const isSingle = (format?: string[]) => {
+  return format?.includes('7"') || format?.includes("Single");
+};
 
 const openModals = useState<Record<string, boolean>>("open-modals", () => ({}));
 
@@ -51,6 +54,13 @@ const remove = async (docId: ReleaseDoc["docId"]) => {
 const move = async (docId: ReleaseDoc["docId"]) => {
   moveWishToCollection(docId);
   openModals.value[docId] = false;
+};
+
+const sync = async (
+  id: ReleaseDoc["id"],
+  master_id: ReleaseDoc["master_id"],
+) => {
+  console.log("SYNC", id, master_id);
 };
 </script>
 
@@ -77,47 +87,88 @@ const move = async (docId: ReleaseDoc["docId"]) => {
       }"
       class="scroll-area"
     >
-      <UModal
-        v-model:open="openModals[item.docId]"
-        :title="item.album"
-        :description="item.artist"
-      >
-        <div class="record">
+      <UModal v-model:open="openModals[item.docId]" :title="item.album">
+        <div
+          class="record"
+          :class="{ single: item.format?.includes('Single') }"
+        >
           <img :src="item.cover_image" loading="lazy" />
         </div>
-        <template #body>
-          <img
-            :src="item.cover_image"
-            class="object-center object-contain h-52 w-full"
-          />
-        </template>
-        <template #footer>
+        <template #title>
           <div class="flex justify-between w-full gap-2">
-            <UButton
-              :href="`https://discogs.com${item.discogs_uri}`"
-              target="_blank"
-              rel="noopener"
-              label="View on Discogs"
-              color="neutral"
-              variant="link"
-              size="sm"
-              trailing-icon="fa7-solid:external-link"
-              external
-            />
-            <div class="flex justify-end gap-2">
+            <UTooltip :text="`Remove from ${type}`" :content="{ side: 'top' }">
               <UButton
-                :label="`Remove from ${type}`"
                 color="error"
                 icon="fa7-solid:trash-alt"
+                variant="subtle"
                 @click="remove(item.docId)"
               />
+            </UTooltip>
+            <UTooltip :text="`Sync with Discogs`" :content="{ side: 'top' }">
               <UButton
-                v-if="type === 'wishlist'"
-                label="Got it!"
-                @click="move(item.docId)"
+                color="neutral"
+                icon="fa7-solid:arrows-rotate"
+                variant="subtle"
+                @click="sync(item.id, item.master_id)"
               />
+            </UTooltip>
+            <UButton
+              v-if="type === 'wishlist'"
+              label="Got it!"
+              color="success"
+              @click="move(item.docId)"
+            />
+          </div>
+        </template>
+        <template #body>
+          <div class="flex gap-6 flex-col md:flex-row">
+            <img
+              :src="item.cover_image"
+              class="object-top object-contain rounded w-full md:w-56 h-full bg-neutral-100 dark:bg-neutral-800"
+              :class="{ 'p-16 md:p-10': isSingle(item.format) }"
+            />
+            <div>
+              <div class="text-lg">{{ item.artist }}</div>
+              <div class="text-dimmed">
+                {{ item.album }}
+              </div>
+              <UBadge
+                v-if="isSingle(item.format)"
+                color="info"
+                variant="subtle"
+                class="mr-2"
+                >Single</UBadge
+              >
+              <UBadge
+                v-if="item.format?.includes('Limited Edition')"
+                color="primary"
+                variant="subtle"
+              >
+                Limited Edition
+              </UBadge>
+              <ul class="text-sm mt-2">
+                <li v-if="item.year">
+                  This Release: <strong>{{ item.year }}</strong>
+                </li>
+                <li v-if="item.master_year">
+                  First release: <strong>{{ item.master_year }}</strong>
+                </li>
+              </ul>
             </div>
           </div>
+        </template>
+        <template #footer>
+          <UButton
+            :href="`https://discogs.com${item.discogs_uri}`"
+            target="_blank"
+            rel="noopener"
+            label="View on Discogs"
+            color="neutral"
+            variant="link"
+            size="sm"
+            trailing-icon="fa7-solid:external-link"
+            external
+          />
         </template>
       </UModal>
     </UScrollArea>
@@ -139,10 +190,13 @@ const move = async (docId: ReleaseDoc["docId"]) => {
     @apply xl:px-[calc((100vw-1280px)/1.75)];
 
     .record {
-      @apply aspect-square relative drop-shadow;
+      @apply aspect-square relative rounded;
 
+      &.single {
+        @apply p-12 lg:p-8 xl:p-4 bg-neutral-100 dark:bg-neutral-800;
+      }
       img {
-        @apply rounded size-full object-cover;
+        @apply rounded size-full object-cover drop-shadow;
       }
       .overlay {
         @apply hidden;

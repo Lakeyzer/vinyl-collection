@@ -79,6 +79,53 @@ export interface DiscogsSearchReleaseResult {
   };
 }
 
+export interface DiscogsGetMasterResponse {
+  styles?: string[];
+  genres?: string[];
+  num_for_sale: number;
+  title: string;
+  most_recent_release: number | null;
+  main_release: number;
+  notes?: string;
+  main_release_url: string;
+  uri: string;
+  versions_url: string;
+  data_quality: string;
+  most_recent_release_url: string;
+  year: number;
+  resource_url: string;
+  lowest_price: number | null;
+  id: number;
+}
+
+export interface DiscogsGetReleaseResponse {
+  series: unknown[];
+  year: number;
+  format_quantity: number;
+  id: number;
+  artists_sort: string;
+  genres: string[];
+  thumb: string;
+  num_for_sale: number;
+  title: string;
+  date_changed: Date | null;
+  lowest_price: number | null;
+  status: string;
+  released_formatted?: string;
+  released?: string;
+  date_added: Date | null;
+  country?: string;
+  notes?: string;
+  uri: string;
+  formats: Format[];
+  resource_url: string;
+  data_quality: string;
+  estimated_weight?: number;
+  styles?: string[];
+  master_id?: number;
+  master_url?: string;
+}
+
 export interface DiscogsSearchResponse {
   pagination: Pagination;
   results: DiscogsSearchResult[];

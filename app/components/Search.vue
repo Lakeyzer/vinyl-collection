@@ -4,7 +4,7 @@ import type { DiscogsSearchQuery, DiscogsSearchResult } from "~~/types";
 
 const { search } = useDiscogs();
 
-const pageSize = 5;
+const pageSize = 15;
 const loading = ref(false);
 const scrollArea = ref();
 const query = ref();

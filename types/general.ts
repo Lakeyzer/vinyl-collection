@@ -13,6 +13,7 @@ export interface Group {
 export interface Release {
   id: number;
   master_id?: number | null;
+  master_year?: number | null;
   cover_image: string;
   thumb: string;
   title: string;
@@ -20,6 +21,7 @@ export interface Release {
   album: string;
   year?: string | null;
   discogs_uri: string;
+  format: string[];
 }
 
 export interface ReleaseDoc extends Release {

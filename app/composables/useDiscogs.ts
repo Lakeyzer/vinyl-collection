@@ -26,7 +26,20 @@ export function useDiscogs() {
     }
   }
 
+  async function fetchMaster(masterId: number) {
+    if (!masterId) return null;
+
+    try {
+      const res = await $fetch(`/api/discogs/master/${masterId}`);
+      return res ?? null;
+    } catch (e) {
+      console.error("Failed fetching master year", e);
+      return null;
+    }
+  }
+
   return {
     search,
+    fetchMaster,
   };
 }

@@ -14,6 +14,7 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     discogsToken: process.env.DISCOGS_ACCESS_TOKEN,
+    discogsUserAgent: process.env.DISCOGS_USER_AGENT,
     public: {
       firebaseApiKey: process.env.NUXT_FIREBASE_API_KEY,
       firebaseAuthDomain: process.env.NUXT_FIREBASE_AUTH_DOMAIN,

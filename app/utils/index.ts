@@ -13,9 +13,12 @@ export function compareValues(a: any, b: any, dir: "asc" | "desc") {
   if (b == null) return dir === "asc" ? -1 : 1;
 
   if (typeof a === "string" && typeof b === "string") {
+    const aNorm = normalizeSortString(a);
+    const bNorm = normalizeSortString(b);
+
     return dir === "asc"
-      ? a.localeCompare(b, undefined, { sensitivity: "base" })
-      : b.localeCompare(a, undefined, { sensitivity: "base" });
+      ? aNorm.localeCompare(bNorm)
+      : bNorm.localeCompare(aNorm);
   }
 
   return dir === "asc" ? a - b : b - a;
@@ -48,4 +51,16 @@ export function filterRecords<T extends { artist?: string; album?: string }>(
 
     return artist.includes(q) || album.includes(q);
   });
+}
+
+/**
+ * Remove "the" from the start of strings
+ * @param value
+ * @returns
+ */
+function normalizeSortString(value: string) {
+  return value
+    .trim()
+    .replace(/^the\s+/i, "")
+    .toLowerCase();
 }
