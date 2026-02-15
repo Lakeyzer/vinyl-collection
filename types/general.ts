@@ -29,10 +29,19 @@ export interface ReleaseDoc extends Release {
   docId: string;
 }
 
-export type SortKey = "artist" | "album" | "year" | "createdAt";
+export type SortKey =
+  | "artist_sort"
+  | "album"
+  | "master_year"
+  | "year"
+  | "createdAt";
 export type SortDirection = "asc" | "desc";
 
 export interface SortOption {
   key: SortKey;
   dir: SortDirection;
+}
+
+export interface Filter {
+  format?: "Album" | "Single";
 }

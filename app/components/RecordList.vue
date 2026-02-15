@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useElementSize } from "@vueuse/core";
-import type { ReleaseDoc, SortOption } from "~~/types";
+import type { ReleaseDoc, SortOption, Filter } from "~~/types";
 
 export interface RecordListProps {
   list: ReleaseDoc[];
@@ -17,14 +17,30 @@ const props = withDefaults(defineProps<RecordListProps>(), {
 const { syncRelease } = useFirestore();
 
 const sort: SortOption[] = [
-  { key: "artist", dir: "asc" },
-  { key: "album", dir: "asc" },
+  { key: "artist_sort", dir: "asc" },
+  { key: "master_year", dir: "asc" },
 ];
 const search = ref();
+const filterOptions = {
+  format: [
+    {
+      value: "Album",
+      label: "Albums",
+    },
+    {
+      value: "Single",
+      label: "Singles",
+    },
+  ],
+};
 const syncing = ref(false);
+const filter = ref<Filter>({});
 const sortedList = computed(() => sortRecords(props.list, sort));
 const filteredList = computed(() =>
-  filterRecords(sortedList.value, search.value),
+  filterRecords(sortedList.value, {
+    text_search: search.value,
+    filter: filter.value,
+  }),
 );
 
 const scrollArea = ref<HTMLElement | null>(null);
@@ -92,9 +108,19 @@ const sync = async (
             type="search"
             placeholder="Search album or artist"
             icon="fa7-solid:magnifying-glass"
+            size="xl"
             class="w-full"
           />
-          <div v-if="search" class="text-dimmed">
+          <USelectMenu
+            v-model="filter.format"
+            placeholder="All formats"
+            :items="filterOptions.format"
+            :search-input="false"
+            value-key="value"
+            size="xl"
+            clear
+          />
+          <div v-if="search || filter.format" class="text-dimmed">
             {{ filteredList?.length }}
           </div>
         </div>
@@ -109,99 +135,96 @@ const sync = async (
         }"
         class="scroll-area"
       >
-        <UChip
-          color="primary"
-          :show="item.format?.includes('Limited Edition')"
-          inset
-        >
-          <UModal v-model:open="openModals[item.docId]" :title="item.album">
+        <UModal v-model:open="openModals[item.docId]" :title="item.album">
+          <UChip
+            color="primary"
+            :show="item.format?.includes('Limited Edition')"
+            inset
+          >
             <div class="record" :class="{ single: isSingle(item.format) }">
               <img :src="item.cover_image" loading="lazy" />
             </div>
-            <template #title>
-              <div class="flex justify-between w-full gap-2">
-                <UTooltip
-                  :text="`Remove from ${type}`"
-                  :content="{ side: 'top' }"
-                >
-                  <UButton
-                    color="error"
-                    icon="fa7-solid:trash-alt"
-                    variant="subtle"
-                    @click="remove(item.docId)"
-                  />
-                </UTooltip>
-                <UTooltip
-                  :text="`Sync with Discogs`"
-                  :content="{ side: 'top' }"
-                >
-                  <UButton
-                    color="neutral"
-                    icon="fa7-solid:arrows-rotate"
-                    variant="subtle"
-                    @click="sync(item.docId, item.id, item.master_id)"
-                  />
-                </UTooltip>
+          </UChip>
+          <template #title>
+            <div class="flex justify-between w-full gap-2">
+              <UTooltip
+                :text="`Remove from ${type}`"
+                :content="{ side: 'top' }"
+              >
                 <UButton
-                  v-if="type === 'wishlist'"
-                  label="Got it!"
-                  color="success"
-                  @click="move(item.docId)"
+                  color="error"
+                  icon="fa7-solid:trash-alt"
+                  variant="subtle"
+                  @click="remove(item.docId)"
                 />
-              </div>
-            </template>
-            <template #body>
-              <div class="flex gap-6 flex-col md:flex-row">
-                <img
-                  :src="item.cover_image"
-                  class="object-top object-contain rounded w-full md:w-56 h-full bg-neutral-100 dark:bg-neutral-800"
-                  :class="{ 'p-16 md:p-10': isSingle(item.format) }"
+              </UTooltip>
+              <UTooltip :text="`Sync with Discogs`" :content="{ side: 'top' }">
+                <UButton
+                  color="neutral"
+                  icon="fa7-solid:arrows-rotate"
+                  variant="subtle"
+                  @click="sync(item.docId, item.id, item.master_id)"
                 />
-                <div>
-                  <div class="text-lg">{{ item.album }}</div>
-                  <div class="text-dimmed">
-                    {{ item.artist }}
-                  </div>
-                  <UBadge
-                    v-if="isSingle(item.format)"
-                    color="info"
-                    variant="subtle"
-                    class="mr-2"
-                    >Single</UBadge
-                  >
-                  <UBadge
-                    v-if="item.format?.includes('Limited Edition')"
-                    color="primary"
-                    variant="subtle"
-                  >
-                    Limited Edition
-                  </UBadge>
-                  <ul class="text-sm mt-2">
-                    <li v-if="item.year">
-                      This Release: <strong>{{ item.year }}</strong>
-                    </li>
-                    <li v-if="item.master_year">
-                      First release: <strong>{{ item.master_year }}</strong>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </template>
-            <template #footer>
+              </UTooltip>
               <UButton
-                :href="`https://discogs.com${item.discogs_uri}`"
-                target="_blank"
-                rel="noopener"
-                label="View on Discogs"
-                color="neutral"
-                variant="link"
-                size="sm"
-                trailing-icon="fa7-solid:external-link"
-                external
+                v-if="type === 'wishlist'"
+                label="Got it!"
+                color="success"
+                @click="move(item.docId)"
               />
-            </template>
-          </UModal>
-        </UChip>
+            </div>
+          </template>
+          <template #body>
+            <div class="flex gap-6 flex-col md:flex-row">
+              <img
+                :src="item.cover_image"
+                class="object-top object-contain rounded w-full md:w-56 h-full bg-neutral-100 dark:bg-neutral-800"
+                :class="{ 'p-16 md:p-10': isSingle(item.format) }"
+              />
+              <div>
+                <div class="text-lg">{{ item.album }}</div>
+                <div class="text-dimmed">
+                  {{ item.artist }}
+                </div>
+                <UBadge
+                  v-if="isSingle(item.format)"
+                  color="info"
+                  variant="subtle"
+                  class="mr-2"
+                  >Single</UBadge
+                >
+                <UBadge
+                  v-if="item.format?.includes('Limited Edition')"
+                  color="primary"
+                  variant="subtle"
+                >
+                  Limited Edition
+                </UBadge>
+                <ul class="text-sm mt-2">
+                  <li v-if="item.year">
+                    This Release: <strong>{{ item.year }}</strong>
+                  </li>
+                  <li v-if="item.master_year">
+                    First release: <strong>{{ item.master_year }}</strong>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </template>
+          <template #footer>
+            <UButton
+              :href="item.discogs_uri"
+              target="_blank"
+              rel="noopener"
+              label="View on Discogs"
+              color="neutral"
+              variant="link"
+              size="sm"
+              trailing-icon="fa7-solid:external-link"
+              external
+            />
+          </template>
+        </UModal>
       </UScrollArea>
       <div v-else class="w-full p-4 text-center text-dimmed text-lg">
         Nothing found
@@ -222,24 +245,13 @@ const sync = async (
     @apply xl:px-[calc((100vw-1280px)/1.85)];
 
     .record {
-      @apply aspect-square relative rounded;
+      @apply aspect-square rounded w-full;
 
       &.single {
         @apply p-12 lg:p-8 xl:p-4 bg-neutral-100 dark:bg-neutral-800;
       }
       img {
         @apply rounded size-full object-cover drop-shadow;
-      }
-      .overlay {
-        @apply hidden;
-        @apply absolute top-0 z-10;
-        @apply w-full h-full;
-        @apply p-2 justify-end items-start;
-      }
-      &:hover {
-        .overlay {
-          @apply flex;
-        }
       }
     }
   }

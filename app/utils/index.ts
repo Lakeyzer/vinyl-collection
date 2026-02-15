@@ -1,7 +1,8 @@
 import type {
   SortOption,
-  DiscogsSearchResult,
+  ReleaseDoc,
   DiscogsGetReleaseResponse,
+  Filter,
 } from "~~/types";
 
 export const album = (title: string): string => {
@@ -20,12 +21,7 @@ export function compareValues(a: any, b: any, dir: "asc" | "desc") {
   if (b == null) return dir === "asc" ? -1 : 1;
 
   if (typeof a === "string" && typeof b === "string") {
-    const aNorm = normalizeSortString(a);
-    const bNorm = normalizeSortString(b);
-
-    return dir === "asc"
-      ? aNorm.localeCompare(bNorm)
-      : bNorm.localeCompare(aNorm);
+    return dir === "asc" ? a.localeCompare(b) : b.localeCompare(a);
   }
 
   return dir === "asc" ? a - b : b - a;
@@ -38,26 +34,41 @@ export function sortRecords<T extends Record<string, any>>(
   return [...list].sort((a, b) => {
     for (const { key, dir } of sort) {
       const result = compareValues(a[key], b[key], dir);
+      // if (key === "master_year" && !)
       if (result !== 0) return result;
     }
     return 0;
   });
 }
 
-export function filterRecords<T extends { artist?: string; album?: string }>(
-  list: T[],
-  query: string,
+export function filterRecords(
+  list: ReleaseDoc[],
+  query: {
+    text_search?: string;
+    filter?: Filter;
+  },
 ) {
-  if (!query) return list;
+  if (!query.text_search && !query.filter) return list;
 
-  const q = query.toLowerCase().trim();
+  const q = query.text_search?.toLowerCase().trim();
+  if (q) {
+    list = list.filter((r) => {
+      const artist = r.artist?.toLowerCase() || "";
+      const album = r.album?.toLowerCase() || "";
 
-  return list.filter((r) => {
-    const artist = r.artist?.toLowerCase() || "";
-    const album = r.album?.toLowerCase() || "";
+      return artist.includes(q) || album.includes(q);
+    });
+  }
+  const f = query.filter?.format;
+  console.log(f);
+  if (f) {
+    list = list.filter((r) => {
+      const format = r.format;
 
-    return artist.includes(q) || album.includes(q);
-  });
+      return f === "Single" ? isSingle(format) : format.includes(f);
+    });
+  }
+  return list;
 }
 
 /**
