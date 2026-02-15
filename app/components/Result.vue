@@ -7,7 +7,7 @@ export interface ResultsProps {
 
 const { hasRelease, hasMaster, isWanted } = useCollectionGuards();
 const { addToCollection, addToWishlist } = useFirestore();
-const { fetchMaster } = useDiscogs();
+const { fetchRelease, fetchMaster } = useDiscogs();
 const toast = useToast();
 
 const props = withDefaults(defineProps<ResultsProps>(), {});
@@ -15,35 +15,23 @@ const sevenInch = '7"';
 
 const adding = ref<number[]>([]);
 
-const itemToRecord = (item: DiscogsSearchResult, master_year?: number) => {
-  return {
-    id: item.id,
-    master_id: item.master_id || null,
-    master_year: master_year || null,
-    cover_image: item.cover_image,
-    thumb: item.thumb,
-    title: item.title,
-    artist: artist(item.title),
-    album: album(item.title),
-    year: item.year || null,
-    discogs_uri: item.uri,
-    format: item.format,
-  };
-};
-
 const addCollection = async (item: DiscogsSearchResult) => {
   adding.value.push(item.id);
   try {
+    const release = await fetchRelease(item.id);
+
     let master;
     if (item.master_id) {
       master = await fetchMaster(item.master_id);
     }
-    await addToCollection(itemToRecord(item, master?.year));
-    toast.add({
-      title: "Success",
-      description: `${item.title} added to Collection`,
-      color: "success",
-    });
+    if (release) {
+      await addToCollection(itemToRecord(release, master?.year));
+      toast.add({
+        title: "Success",
+        description: `${item.title} added to Collection`,
+        color: "success",
+      });
+    }
   } catch (e: any) {
     console.error(e);
     toast.add({
@@ -58,18 +46,27 @@ const addCollection = async (item: DiscogsSearchResult) => {
 const addWishlist = async (item: DiscogsSearchResult) => {
   adding.value.push(item.id);
   try {
+    const release = await fetchRelease(item.id);
+
     let master;
     if (item.master_id) {
       master = await fetchMaster(item.master_id);
     }
-    await addToWishlist(itemToRecord(item, master?.year));
-    toast.add({
-      title: "Success",
-      description: `${item.title} added to Wishlist`,
-      color: "success",
-    });
-  } catch (e) {
+    if (release) {
+      await addToWishlist(itemToRecord(release, master?.year));
+      toast.add({
+        title: "Success",
+        description: `${item.title} added to Wishlist`,
+        color: "success",
+      });
+    }
+  } catch (e: any) {
     console.error(e);
+    toast.add({
+      title: "Couldn't add",
+      description: e.message,
+      color: "error",
+    });
   } finally {
     adding.value = adding.value.filter((id) => id !== item.id);
   }

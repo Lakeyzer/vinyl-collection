@@ -99,29 +99,19 @@ export interface DiscogsGetMasterResponse {
 }
 
 export interface DiscogsGetReleaseResponse {
-  series: unknown[];
+  artists: Artist[];
   year: number;
-  format_quantity: number;
+  images?: Image[];
   id: number;
   artists_sort: string;
-  genres: string[];
   thumb: string;
   num_for_sale: number;
   title: string;
-  date_changed: Date | null;
-  lowest_price: number | null;
-  status: string;
-  released_formatted?: string;
-  released?: string;
-  date_added: Date | null;
   country?: string;
-  notes?: string;
   uri: string;
   formats: Format[];
   resource_url: string;
-  data_quality: string;
   estimated_weight?: number;
-  styles?: string[];
   master_id?: number;
   master_url?: string;
 }
@@ -153,4 +143,20 @@ export interface Pagination {
     first?: string;
   };
   items: number;
+}
+
+export interface Image {
+  uri: string;
+  height: number;
+  width: number;
+  resource_url: string;
+  type: "primary" | "secondary";
+  uri150: string;
+}
+
+export interface Artist {
+  profile: string;
+  releases_url: string;
+  name: string;
+  uri: string;
 }

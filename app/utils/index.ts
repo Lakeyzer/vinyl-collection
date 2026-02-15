@@ -1,4 +1,8 @@
-import type { SortOption } from "~~/types";
+import type {
+  SortOption,
+  DiscogsSearchResult,
+  DiscogsGetReleaseResponse,
+} from "~~/types";
 
 export const album = (title: string): string => {
   return String(title.split(" - ")?.[1]);
@@ -67,3 +71,33 @@ function normalizeSortString(value: string) {
     .replace(/^the\s+/i, "")
     .toLowerCase();
 }
+
+export const itemToRecord = (
+  item: DiscogsGetReleaseResponse,
+  master_year?: number,
+) => {
+  // find primary cover
+  let cover_image = item.images?.find(
+    (image) => image.type === "primary",
+  )?.resource_url;
+
+  if (!cover_image) {
+    cover_image = item.images?.[0]?.resource_url ?? "";
+  }
+
+  return {
+    id: item.id,
+    master_id: item.master_id || null,
+    master_year: master_year || null,
+    master_url: item.master_url || null,
+    cover_image: cover_image,
+    thumb: item.thumb,
+    title: item.title,
+    artist: item.artists.map((artist) => artist.name).join(", "),
+    artist_sort: item.artists_sort,
+    album: item.title,
+    year: item.year,
+    discogs_uri: item.uri,
+    format: item.formats[0]?.descriptions || [],
+  };
+};

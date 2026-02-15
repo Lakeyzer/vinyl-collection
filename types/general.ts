@@ -14,12 +14,13 @@ export interface Release {
   id: number;
   master_id?: number | null;
   master_year?: number | null;
-  cover_image: string;
+  master_url?: string | null;
+  cover_image?: string;
   thumb: string;
   title: string;
   artist: string;
   album: string;
-  year?: string | null;
+  year: number;
   discogs_uri: string;
   format: string[];
 }

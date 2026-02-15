@@ -13,12 +13,13 @@ import {
   runTransaction,
 } from "firebase/firestore";
 import { useAuth } from "./useAuth";
-import type { Release } from "~~/types";
+import type { DiscogsSearchReleaseResult, Release, ReleaseDoc } from "~~/types";
 
 export function useFirestore() {
   const { $firestoreDb } = useNuxtApp();
   const { profile, user } = useAuth();
   const { isWanted } = useCollectionGuards();
+  const { fetchRelease, fetchMaster } = useDiscogs();
 
   function assertGroup() {
     if (!profile.value?.groupId) {
@@ -134,6 +135,48 @@ export function useFirestore() {
   }
 
   /**
+   * SYNC RELEASE
+   */
+  async function syncRelease(
+    collection: "collections" | "wishlists",
+    docId: ReleaseDoc["docId"],
+    id: ReleaseDoc["id"],
+    masterId?: ReleaseDoc["master_id"],
+  ) {
+    const { $firestoreDb } = useNuxtApp();
+
+    try {
+      // fetch the release from Discogs
+      const release = await fetchRelease(id);
+
+      if (!release) {
+        console.warn("Release not found", id);
+        return;
+      }
+
+      // optionally fetch master info
+      let master;
+      if (release.master_id && masterId) {
+        master = await fetchMaster(masterId);
+      }
+
+      // build the partial update object
+      const updateRecord = itemToRecord(release, master?.year);
+
+      console.log("release", release);
+      console.log("updateRecord", updateRecord);
+
+      // update Firestore document (only the fields in updateRecord are changed)
+      const ref = doc($firestoreDb, collection, docId);
+      await updateDoc(ref, updateRecord);
+
+      console.log(`Synced release ${id} (${docId}) successfully`);
+    } catch (err) {
+      console.error("Failed to sync release", err);
+    }
+  }
+
+  /**
    * REALTIME COLLECTION
    */
   function onCollection(groupId: string, callback: (data: any[]) => void) {
@@ -171,5 +214,6 @@ export function useFirestore() {
     joinWish,
     leaveWish,
     moveWishToCollection,
+    syncRelease,
   };
 }

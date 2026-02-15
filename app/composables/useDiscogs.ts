@@ -1,4 +1,8 @@
-import type { DiscogsSearchQuery, DiscogsSearchResponse } from "~~/types";
+import type {
+  DiscogsSearchQuery,
+  DiscogsSearchResponse,
+  ReleaseDoc,
+} from "~~/types";
 
 export function useDiscogs() {
   async function search({
@@ -26,7 +30,7 @@ export function useDiscogs() {
     }
   }
 
-  async function fetchMaster(masterId: number) {
+  async function fetchMaster(masterId: ReleaseDoc["master_id"]) {
     if (!masterId) return null;
 
     try {
@@ -38,8 +42,21 @@ export function useDiscogs() {
     }
   }
 
+  async function fetchRelease(id: ReleaseDoc["id"]) {
+    if (!id) return null;
+
+    try {
+      const res = await $fetch(`/api/discogs/release/${id}`);
+      return res ?? null;
+    } catch (e) {
+      console.error("Failed fetching master year", e);
+      return null;
+    }
+  }
+
   return {
     search,
     fetchMaster,
+    fetchRelease,
   };
 }
