@@ -16,6 +16,7 @@ const isLoading = computed(() => {
     <RecordList
       :list="collection"
       :group="profile?.group"
+      :groupId="profile?.groupId"
       :loading="isLoading"
     />
   </NuxtLayout>

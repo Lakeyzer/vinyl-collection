@@ -13,12 +13,11 @@ import {
   runTransaction,
 } from "firebase/firestore";
 import { useAuth } from "./useAuth";
-import type { DiscogsSearchReleaseResult, Release, ReleaseDoc } from "~~/types";
+import type { Release, ReleaseDoc } from "~~/types";
 
 export function useFirestore() {
   const { $firestoreDb } = useNuxtApp();
   const { profile, user } = useAuth();
-  const { isWanted } = useCollectionGuards();
   const { fetchRelease, fetchMaster } = useDiscogs();
 
   function assertGroup() {
@@ -163,14 +162,10 @@ export function useFirestore() {
       // build the partial update object
       const updateRecord = itemToRecord(release, master?.year);
 
-      console.log("release", release);
-      console.log("updateRecord", updateRecord);
-
       // update Firestore document (only the fields in updateRecord are changed)
       const ref = doc($firestoreDb, collection, docId);
       await updateDoc(ref, updateRecord);
 
-      console.log(`Synced release ${id} (${docId}) successfully`);
     } catch (err) {
       console.error("Failed to sync release", err);
     }

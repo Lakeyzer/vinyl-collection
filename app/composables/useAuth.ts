@@ -43,14 +43,8 @@ export function useAuth() {
           throw new Error("User has no groupId");
         }
 
-        const groupRef = doc($firestoreDb, "groups", groupId);
-        const groupSnap = await getDoc(groupRef);
-
-        if (!groupSnap.exists()) {
-          throw new Error("Group not found");
-        }
-
-        profile.value.group = groupSnap.data()?.name;
+        const group = await getGroup(groupId);
+        profile.value.group = group?.name;
       } catch (err) {
         console.error("Failed to load auth context", err);
         profile.value = null;
@@ -59,6 +53,16 @@ export function useAuth() {
       }
     });
   });
+
+  async function getGroup(groupId: string) {
+    const groupRef = doc($firestoreDb, "groups", groupId);
+    const groupSnap = await getDoc(groupRef);
+
+    if (!groupSnap.exists()) {
+      throw new Error("Group not found");
+    }
+    return groupSnap.data();
+  }
 
   async function signin(email: string, password: string) {
     error.value = null;
@@ -79,6 +83,7 @@ export function useAuth() {
     profile,
     loading,
     error,
+    getGroup,
     signin,
     logout,
   };

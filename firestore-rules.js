@@ -20,7 +20,7 @@ service cloud.firestore {
     }
 
     match /groups/{groupId} {
-      allow read: if isAuthed() && userGroup() == groupId;
+      allow read;
       allow write: if false;
     }
 

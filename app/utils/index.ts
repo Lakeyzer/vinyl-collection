@@ -60,7 +60,6 @@ export function filterRecords(
     });
   }
   const f = query.filter?.format;
-  console.log(f);
   if (f) {
     list = list.filter((r) => {
       const format = r.format;

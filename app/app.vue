@@ -1,5 +1,7 @@
 <script setup>
 const toaster = { position: "top-center" };
+const { profile } = useAuth();
+const isOpen = useShareModal();
 
 useHead({
   meta: [{ name: "viewport", content: "width=device-width, initial-scale=1" }],
@@ -10,7 +12,7 @@ useHead({
 });
 
 const title = "Vinyl Collection";
-const description = "Indira & Key's Vinyl Collection and Wish List";
+const description = "Checkout my Vinyl Collection and Wishlist";
 
 useSeoMeta({
   title,
@@ -26,5 +28,6 @@ useSeoMeta({
 <template>
   <UApp :toaster="toaster">
     <NuxtPage />
+    <Share v-if="profile" v-model:open="isOpen" />
   </UApp>
 </template>
