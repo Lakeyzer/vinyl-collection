@@ -1,4 +1,5 @@
 {
+  "version": "0.1.0",
   "name": "vinyl-collection",
   "private": true,
   "type": "module",
