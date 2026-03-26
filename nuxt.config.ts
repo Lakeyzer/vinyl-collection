@@ -1,7 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: ["@nuxt/eslint", "@nuxt/ui"],
-  ssr: false,
   devtools: {
     enabled: true,
   },
@@ -9,9 +8,6 @@ export default defineNuxtConfig({
     https: true,
   },
   css: ["~/assets/css/main.css"],
-  routeRules: {
-    "/": { prerender: true },
-  },
   runtimeConfig: {
     discogsToken: process.env.DISCOGS_ACCESS_TOKEN,
     discogsUserAgent: process.env.DISCOGS_USER_AGENT,
@@ -22,12 +18,6 @@ export default defineNuxtConfig({
       firebaseStorageBucket: process.env.NUXT_FIREBASE_STORAGE_BUCKET,
       firebaseMessagingSenderId: process.env.NUXT_FIREBASE_MESSAGING_SENDER_ID,
       firebaseAppId: process.env.NUXT_FIREBASE_APP_ID,
-    },
-  },
-  nitro: {
-    preset: "firebase",
-    firebase: {
-      gen: 2,
     },
   },
   compatibilityDate: "2025-01-15",

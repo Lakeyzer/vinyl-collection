@@ -9,7 +9,7 @@ Built for small groups/households who want to track and share their collection a
 - ⭐ Maintain Wishlist
 - 🔎 Discogs search integration
 - 📷 Scan barcode to find records on Discogs
-- ☁️ Hosted on Firebase (Functions + Hosting)
+- ☁️ Hosted on Vercel
 
 ## 🧱 Tech Stack
 
@@ -147,56 +147,10 @@ After building, the .env file is copied to:
 
 This is required for Firebase Functions to access the Discogs token.
 
-## ☁️ Deployment to Firebase
+## ☁️ Hosted on Vercel
 
-Nuxt deployment docs:
-👉 https://nuxt.com/deploy/firebase
-
-> ℹ️ The project doesn't have to be hosted on Firebase.  
-> Check the Nuxt docs for other ways to deploy 👉 https://nuxt.com/docs/4.x/getting-started/deployment
-
-### Install Firebase CLI
-
-```bash
-pnpm install -g firebase-tools@latest
-```
-
-Login:
-
-```bash
-firebase login
-```
-
-### Configure `firebase.json`
-
-Replace the site name with your Firebase project ID:
-
-```json
-{
-  "hosting": [
-    {
-      "site": "YOUR_PROJECT_ID"
-    }
-  ]
-}
-```
-
-### Deploy
-
-```bash
-firebase deploy
-```
-
-### ⚠️ Known Firebase Functions Quirk
-
-Sometimes Firebase Functions complains about missing dependencies inside .output/server.
-This project automatically fixes this in postbuild, but if deployment fails, run:
-
-```
-cd .output/server
-pnpm add @google-cloud/functions-framework
-cd ../../
-```
+This project can very easy be hosted on Vercel. Simply link your repository and see the magic happen.
+👉 https://vercel.com/
 
 ## 🧠 Notes
 
