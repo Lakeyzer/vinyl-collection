@@ -1,5 +1,5 @@
 import { ref, onMounted } from "vue";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, getDocs, collection } from "firebase/firestore";
 import type { Profile, Group } from "../../types";
 import {
   signInWithEmailAndPassword,
@@ -64,6 +64,11 @@ export function useAuth() {
     return groupSnap.data();
   }
 
+  async function listGroups(): Promise<Group[]> {
+    const snap = await getDocs(collection($firestoreDb, "groups"));
+    return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Group, "id">) }));
+  }
+
   async function signin(email: string, password: string) {
     error.value = null;
     try {
@@ -84,6 +89,7 @@ export function useAuth() {
     loading,
     error,
     getGroup,
+    listGroups,
     signin,
     logout,
   };
