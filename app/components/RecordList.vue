@@ -16,7 +16,7 @@ const props = withDefaults(defineProps<RecordListProps>(), {
 });
 
 const { syncRelease } = useFirestore();
-const { profile } = useAuth();
+const { profile, user } = useAuth();
 const isOpen = useShareModal();
 
 const record = ref<ReleaseDoc | null>(null);
@@ -50,8 +50,29 @@ const filteredList = computed(() =>
 
 const scrollArea = ref<HTMLElement | null>(null);
 const { width } = useElementSize(scrollArea);
-const { removeFromCollection, removeFromWishlist, moveWishToCollection } =
-  useFirestore();
+const {
+  removeFromCollection,
+  removeFromWishlist,
+  moveWishToCollection,
+  joinWish,
+  leaveWish,
+  getUsernames,
+} = useFirestore();
+
+const usernames = ref<Record<string, string>>({});
+
+const iWantThis = computed(() =>
+  record.value?.wantedBy?.includes(user.value?.uid ?? ""),
+);
+
+const toggleWant = async () => {
+  if (!record.value) return;
+  if (iWantThis.value) {
+    await leaveWish(record.value.docId);
+  } else {
+    await joinWish(record.value.docId);
+  }
+};
 
 const gap = 16;
 const lanes = computed(() =>
@@ -66,9 +87,19 @@ const listOwner = computed(() => {
   return profile.value?.groupId === props.groupId;
 });
 
-const showRecordDetails = (item: ReleaseDoc) => {
+const showRecordDetails = async (item: ReleaseDoc) => {
   record.value = item;
   showRecord.value = true;
+
+  if (props.type === "wishlist") {
+    const uids = [
+      ...(item.createdBy ? [item.createdBy] : []),
+      ...(item.wantedBy ?? []),
+    ];
+    if (uids.length) {
+      usernames.value = await getUsernames(uids);
+    }
+  }
 };
 
 const remove = async (docId: ReleaseDoc["docId"]) => {
@@ -246,6 +277,24 @@ const sync = async (
                 First release: <strong>{{ record?.master_year }}</strong>
               </li>
             </ul>
+            <div v-if="type === 'wishlist'" class="mt-4 flex flex-col gap-2">
+              <div v-if="record?.wantedBy?.length" class="text-sm">
+                <div class="text-dimmed">Wanted by:</div>
+                <strong>{{
+                  record.wantedBy.map((uid) => usernames[uid]).join(", ")
+                }}</strong>
+              </div>
+              <UButton
+                :label="
+                  iWantThis ? 'I no longer want this' : 'I want this too!'
+                "
+                :color="iWantThis ? 'neutral' : 'primary'"
+                :variant="iWantThis ? 'subtle' : 'solid'"
+                size="sm"
+                class="self-start"
+                @click="toggleWant"
+              />
+            </div>
           </div>
         </div>
       </template>

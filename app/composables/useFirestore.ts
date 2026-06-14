@@ -1,5 +1,6 @@
 import {
   doc,
+  getDoc,
   addDoc,
   updateDoc,
   deleteDoc,
@@ -134,6 +135,20 @@ export function useFirestore() {
   }
 
   /**
+   * GET USERNAMES
+   */
+  async function getUsernames(uids: string[]): Promise<Record<string, string>> {
+    const unique = [...new Set(uids)];
+    const entries = await Promise.all(
+      unique.map(async (uid) => {
+        const snap = await getDoc(doc($firestoreDb, "users", uid));
+        return [uid, snap.exists() ? snap.data().username : uid] as const;
+      }),
+    );
+    return Object.fromEntries(entries);
+  }
+
+  /**
    * SYNC RELEASE
    */
   async function syncRelease(
@@ -208,6 +223,7 @@ export function useFirestore() {
     removeFromWishlist,
     joinWish,
     leaveWish,
+    getUsernames,
     moveWishToCollection,
     syncRelease,
   };

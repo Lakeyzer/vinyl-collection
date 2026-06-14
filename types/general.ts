@@ -27,6 +27,8 @@ export interface Release {
 
 export interface ReleaseDoc extends Release {
   docId: string;
+  createdBy?: string;
+  wantedBy?: string[];
 }
 
 export type SortKey =
