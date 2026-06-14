@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+definePageMeta({ middleware: "auth" });
+
 const { wishlist } = useCollectionGuards();
 const { profile } = useAuth();
 const wishlistsLoading: Ref<Record<string, boolean>> =

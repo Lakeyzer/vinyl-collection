@@ -5,6 +5,9 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updatePassword,
   type User,
 } from "firebase/auth";
 
@@ -83,6 +86,29 @@ export function useAuth() {
     await signOut($firebaseAuth);
   }
 
+  async function changePassword(
+    currentPassword: string,
+    newPassword: string,
+  ) {
+    error.value = null;
+
+    if (!user.value?.email) {
+      throw new Error("Not authenticated");
+    }
+
+    try {
+      const credential = EmailAuthProvider.credential(
+        user.value.email,
+        currentPassword,
+      );
+      await reauthenticateWithCredential(user.value, credential);
+      await updatePassword(user.value, newPassword);
+    } catch (e: any) {
+      error.value = e.message;
+      throw e;
+    }
+  }
+
   return {
     user,
     profile,
@@ -92,5 +118,6 @@ export function useAuth() {
     listGroups,
     signin,
     logout,
+    changePassword,
   };
 }
