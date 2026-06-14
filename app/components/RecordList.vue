@@ -16,10 +16,13 @@ const props = withDefaults(defineProps<RecordListProps>(), {
 });
 
 const { syncRelease } = useFirestore();
-const { profile } = useAuth();
+const { profile, user } = useAuth();
 const isOpen = useShareModal();
 
-const record = ref<ReleaseDoc | null>(null);
+const recordId = ref<ReleaseDoc["docId"] | null>(null);
+const record = computed<ReleaseDoc | null>(
+  () => props.list.find((item) => item.docId === recordId.value) ?? null,
+);
 const showRecord = ref<boolean>(false);
 const sort: SortOption[] = [
   { key: "artist_sort", dir: "asc" },
@@ -50,8 +53,46 @@ const filteredList = computed(() =>
 
 const scrollArea = ref<HTMLElement | null>(null);
 const { width } = useElementSize(scrollArea);
-const { removeFromCollection, removeFromWishlist, moveWishToCollection } =
-  useFirestore();
+const {
+  removeFromCollection,
+  removeFromWishlist,
+  moveWishToCollection,
+  joinWish,
+  leaveWish,
+  getUsernames,
+  getGroupMembers,
+} = useFirestore();
+
+const groupMembers = ref<{ uid: string; username: string }[]>([]);
+
+watchEffect(async () => {
+  if (!import.meta.client || props.type !== "wishlist" || !props.groupId) {
+    groupMembers.value = [];
+    return;
+  }
+  groupMembers.value = await getGroupMembers(props.groupId);
+});
+
+const usernames = ref<Record<string, string>>({});
+
+const iWantThis = computed(() =>
+  record.value?.wantedBy?.includes(user.value?.uid ?? ""),
+);
+
+const toggleWant = async () => {
+  if (!record.value) return;
+  if (iWantThis.value) {
+    if (record.value.wantedBy?.length === 1) {
+      await removeFromWishlist(record.value.docId);
+      showRecord.value = false;
+      recordId.value = null;
+    } else {
+      await leaveWish(record.value.docId);
+    }
+  } else {
+    await joinWish(record.value.docId);
+  }
+};
 
 const gap = 16;
 const lanes = computed(() =>
@@ -66,10 +107,27 @@ const listOwner = computed(() => {
   return profile.value?.groupId === props.groupId;
 });
 
-const showRecordDetails = (item: ReleaseDoc) => {
-  record.value = item;
+const showRecordDetails = async (item: ReleaseDoc) => {
+  recordId.value = item.docId;
   showRecord.value = true;
 };
+
+watch(
+  record,
+  async (item) => {
+    if (props.type !== "wishlist" || !item) return;
+
+    const uids = [
+      ...(item.createdBy ? [item.createdBy] : []),
+      ...(item.wantedBy ?? []),
+    ].filter((uid) => !(uid in usernames.value));
+
+    if (uids.length) {
+      Object.assign(usernames.value, await getUsernames(uids));
+    }
+  },
+  { immediate: true },
+);
 
 const remove = async (docId: ReleaseDoc["docId"]) => {
   if (props.type === "collection") {
@@ -79,13 +137,13 @@ const remove = async (docId: ReleaseDoc["docId"]) => {
     await removeFromWishlist(docId);
   }
   showRecord.value = false;
-  record.value = null;
+  recordId.value = null;
 };
 
 const move = async (docId: ReleaseDoc["docId"]) => {
   moveWishToCollection(docId);
   showRecord.value = false;
-  record.value = null;
+  recordId.value = null;
 };
 
 const syncAll = async () => {
@@ -133,6 +191,7 @@ const sync = async (
             class="w-full"
           />
           <USelectMenu
+            v-if="type === 'collection'"
             v-model="filter.format"
             placeholder="All formats"
             :items="filterOptions.format"
@@ -141,7 +200,21 @@ const sync = async (
             size="xl"
             clear
           />
-          <div v-if="search || filter.format" class="text-dimmed">
+          <USelectMenu
+            v-if="type === 'wishlist'"
+            v-model="filter.wantedBy"
+            placeholder="Wanted by anyone"
+            :items="groupMembers"
+            :search-input="false"
+            label-key="username"
+            value-key="uid"
+            size="xl"
+            clear
+          />
+          <div
+            v-if="search || filter.format || filter.wantedBy"
+            class="text-dimmed"
+          >
             {{ filteredList?.length }}
           </div>
         </div>
@@ -246,6 +319,25 @@ const sync = async (
                 First release: <strong>{{ record?.master_year }}</strong>
               </li>
             </ul>
+            <div v-if="type === 'wishlist'" class="mt-4 flex flex-col gap-2">
+              <div v-if="record?.wantedBy?.length" class="text-sm">
+                <div class="text-dimmed">Wanted by:</div>
+                <strong>{{
+                  record.wantedBy.map((uid) => usernames[uid]).join(", ")
+                }}</strong>
+              </div>
+              <UButton
+                v-if="listOwner"
+                :label="
+                  iWantThis ? 'I no longer want this' : 'I want this too!'
+                "
+                :color="iWantThis ? 'neutral' : 'primary'"
+                :variant="iWantThis ? 'subtle' : 'solid'"
+                size="sm"
+                class="self-start"
+                @click="toggleWant"
+              />
+            </div>
           </div>
         </div>
       </template>

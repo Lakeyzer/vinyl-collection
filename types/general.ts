@@ -27,6 +27,8 @@ export interface Release {
 
 export interface ReleaseDoc extends Release {
   docId: string;
+  createdBy?: string;
+  wantedBy?: string[];
 }
 
 export type SortKey =
@@ -44,4 +46,5 @@ export interface SortOption {
 
 export interface Filter {
   format?: "Album" | "Single";
+  wantedBy?: string;
 }

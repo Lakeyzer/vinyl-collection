@@ -57,7 +57,7 @@ const items = computed<DropdownMenuItem[][]>(() => [
 </script>
 
 <template>
-  <UHeader>
+  <UHeader :toggle="false">
     <template #left>
       <NuxtLink to="/">Vinyl Collection</NuxtLink>
     </template>

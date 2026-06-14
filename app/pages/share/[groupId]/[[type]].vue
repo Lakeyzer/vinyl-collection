@@ -10,12 +10,22 @@ const { getGroup } = useAuth();
 
 const group = ref();
 
-const collections = useState<{ [key: string]: ReleaseDoc[] }>("collections");
-const collectionsLoading: Ref<Record<string, boolean>> =
-  useState("collectionsLoading");
-const wishlists = useState<{ [key: string]: ReleaseDoc[] }>("wishlists");
-const wishlistsLoading: Ref<Record<string, boolean>> =
-  useState("wishlistsLoading");
+const collections = useState<{ [key: string]: ReleaseDoc[] }>(
+  "collections",
+  () => ({}) as { [key: string]: ReleaseDoc[] },
+);
+const collectionsLoading: Ref<Record<string, boolean>> = useState(
+  "collectionsLoading",
+  () => ({}) as Record<string, boolean>,
+);
+const wishlists = useState<{ [key: string]: ReleaseDoc[] }>(
+  "wishlists",
+  () => ({}) as { [key: string]: ReleaseDoc[] },
+);
+const wishlistsLoading: Ref<Record<string, boolean>> = useState(
+  "wishlistsLoading",
+  () => ({}) as Record<string, boolean>,
+);
 
 const type = ref<RecordListProps["type"]>(
   (route.params.type as RecordListProps["type"]) || "collection",

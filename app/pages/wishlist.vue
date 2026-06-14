@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+definePageMeta({ middleware: "auth" });
+
 const { wishlist } = useCollectionGuards();
 const { profile } = useAuth();
 const wishlistsLoading: Ref<Record<string, boolean>> =
@@ -17,6 +19,7 @@ const isLoading = computed(() => {
       :list="wishlist"
       type="wishlist"
       :group="profile?.group"
+      :groupId="profile?.groupId"
       :loading="isLoading"
     />
   </NuxtLayout>

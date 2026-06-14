@@ -1,10 +1,13 @@
 import { ref, onMounted } from "vue";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, getDocs, collection } from "firebase/firestore";
 import type { Profile, Group } from "../../types";
 import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updatePassword,
   type User,
 } from "firebase/auth";
 
@@ -64,6 +67,11 @@ export function useAuth() {
     return groupSnap.data();
   }
 
+  async function listGroups(): Promise<Group[]> {
+    const snap = await getDocs(collection($firestoreDb, "groups"));
+    return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Group, "id">) }));
+  }
+
   async function signin(email: string, password: string) {
     error.value = null;
     try {
@@ -78,13 +86,38 @@ export function useAuth() {
     await signOut($firebaseAuth);
   }
 
+  async function changePassword(
+    currentPassword: string,
+    newPassword: string,
+  ) {
+    error.value = null;
+
+    if (!user.value?.email) {
+      throw new Error("Not authenticated");
+    }
+
+    try {
+      const credential = EmailAuthProvider.credential(
+        user.value.email,
+        currentPassword,
+      );
+      await reauthenticateWithCredential(user.value, credential);
+      await updatePassword(user.value, newPassword);
+    } catch (e: any) {
+      error.value = e.message;
+      throw e;
+    }
+  }
+
   return {
     user,
     profile,
     loading,
     error,
     getGroup,
+    listGroups,
     signin,
     logout,
+    changePassword,
   };
 }

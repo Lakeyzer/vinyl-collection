@@ -67,6 +67,10 @@ export function filterRecords(
       return f === "Single" ? isSingle(format) : format.includes(f);
     });
   }
+  const wantedBy = query.filter?.wantedBy;
+  if (wantedBy) {
+    list = list.filter((r) => r.wantedBy?.includes(wantedBy));
+  }
   return list;
 }
 

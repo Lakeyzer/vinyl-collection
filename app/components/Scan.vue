@@ -50,7 +50,7 @@ function reset() {
   <UModal
     title="Scan Barcode"
     :ui="{ body: 'p-0 sm:p-0' }"
-    @update:open="scan"
+    @update:open="(value) => value && scan()"
     @after:leave="reset"
   >
     <UButton
