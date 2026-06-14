@@ -19,7 +19,10 @@ const { syncRelease } = useFirestore();
 const { profile, user } = useAuth();
 const isOpen = useShareModal();
 
-const record = ref<ReleaseDoc | null>(null);
+const recordId = ref<ReleaseDoc["docId"] | null>(null);
+const record = computed<ReleaseDoc | null>(
+  () => props.list.find((item) => item.docId === recordId.value) ?? null,
+);
 const showRecord = ref<boolean>(false);
 const sort: SortOption[] = [
   { key: "artist_sort", dir: "asc" },
@@ -88,19 +91,26 @@ const listOwner = computed(() => {
 });
 
 const showRecordDetails = async (item: ReleaseDoc) => {
-  record.value = item;
+  recordId.value = item.docId;
   showRecord.value = true;
+};
 
-  if (props.type === "wishlist") {
+watch(
+  record,
+  async (item) => {
+    if (props.type !== "wishlist" || !item) return;
+
     const uids = [
       ...(item.createdBy ? [item.createdBy] : []),
       ...(item.wantedBy ?? []),
-    ];
+    ].filter((uid) => !(uid in usernames.value));
+
     if (uids.length) {
-      usernames.value = await getUsernames(uids);
+      Object.assign(usernames.value, await getUsernames(uids));
     }
-  }
-};
+  },
+  { immediate: true },
+);
 
 const remove = async (docId: ReleaseDoc["docId"]) => {
   if (props.type === "collection") {
@@ -110,13 +120,13 @@ const remove = async (docId: ReleaseDoc["docId"]) => {
     await removeFromWishlist(docId);
   }
   showRecord.value = false;
-  record.value = null;
+  recordId.value = null;
 };
 
 const move = async (docId: ReleaseDoc["docId"]) => {
   moveWishToCollection(docId);
   showRecord.value = false;
-  record.value = null;
+  recordId.value = null;
 };
 
 const syncAll = async () => {
@@ -285,6 +295,7 @@ const sync = async (
                 }}</strong>
               </div>
               <UButton
+                v-if="listOwner"
                 :label="
                   iWantThis ? 'I no longer want this' : 'I want this too!'
                 "
