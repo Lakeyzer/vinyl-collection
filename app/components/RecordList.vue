@@ -60,7 +60,18 @@ const {
   joinWish,
   leaveWish,
   getUsernames,
+  getGroupMembers,
 } = useFirestore();
+
+const groupMembers = ref<{ uid: string; username: string }[]>([]);
+
+watchEffect(async () => {
+  if (!import.meta.client || props.type !== "wishlist" || !props.groupId) {
+    groupMembers.value = [];
+    return;
+  }
+  groupMembers.value = await getGroupMembers(props.groupId);
+});
 
 const usernames = ref<Record<string, string>>({});
 
@@ -180,6 +191,7 @@ const sync = async (
             class="w-full"
           />
           <USelectMenu
+            v-if="type === 'collection'"
             v-model="filter.format"
             placeholder="All formats"
             :items="filterOptions.format"
@@ -188,7 +200,21 @@ const sync = async (
             size="xl"
             clear
           />
-          <div v-if="search || filter.format" class="text-dimmed">
+          <USelectMenu
+            v-if="type === 'wishlist'"
+            v-model="filter.wantedBy"
+            placeholder="Wanted by anyone"
+            :items="groupMembers"
+            :search-input="false"
+            label-key="username"
+            value-key="uid"
+            size="xl"
+            clear
+          />
+          <div
+            v-if="search || filter.format || filter.wantedBy"
+            class="text-dimmed"
+          >
             {{ filteredList?.length }}
           </div>
         </div>

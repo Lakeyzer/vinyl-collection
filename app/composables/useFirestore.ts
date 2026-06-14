@@ -8,6 +8,7 @@ import {
   serverTimestamp,
   query,
   where,
+  getDocs,
   onSnapshot,
   arrayRemove,
   arrayUnion,
@@ -149,6 +150,23 @@ export function useFirestore() {
   }
 
   /**
+   * GET GROUP MEMBERS
+   */
+  async function getGroupMembers(
+    groupId: string,
+  ): Promise<{ uid: string; username: string }[]> {
+    const q = query(
+      collection($firestoreDb, "users"),
+      where("groupId", "==", groupId),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({
+      uid: d.id,
+      username: d.data().username,
+    }));
+  }
+
+  /**
    * SYNC RELEASE
    */
   async function syncRelease(
@@ -224,6 +242,7 @@ export function useFirestore() {
     joinWish,
     leaveWish,
     getUsernames,
+    getGroupMembers,
     moveWishToCollection,
     syncRelease,
   };

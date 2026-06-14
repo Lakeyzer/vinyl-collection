@@ -46,4 +46,5 @@ export interface SortOption {
 
 export interface Filter {
   format?: "Album" | "Single";
+  wantedBy?: string;
 }
