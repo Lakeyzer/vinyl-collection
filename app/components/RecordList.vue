@@ -71,7 +71,13 @@ const iWantThis = computed(() =>
 const toggleWant = async () => {
   if (!record.value) return;
   if (iWantThis.value) {
-    await leaveWish(record.value.docId);
+    if (record.value.wantedBy?.length === 1) {
+      await removeFromWishlist(record.value.docId);
+      showRecord.value = false;
+      recordId.value = null;
+    } else {
+      await leaveWish(record.value.docId);
+    }
   } else {
     await joinWish(record.value.docId);
   }
