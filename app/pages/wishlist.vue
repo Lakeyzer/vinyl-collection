@@ -17,6 +17,7 @@ const isLoading = computed(() => {
       :list="wishlist"
       type="wishlist"
       :group="profile?.group"
+      :groupId="profile?.groupId"
       :loading="isLoading"
     />
   </NuxtLayout>
